@@ -115,7 +115,8 @@ bool StartDB()
     loader
         .AddDatabase(LoginDatabase, "Login")
         .AddDatabase(CharacterDatabase, "Character")
-        .AddDatabase(WorldDatabase, "World");
+        .AddDatabase(WorldDatabase, "World")
+        .AddDatabase(DBCDatabase, "Dbc");
 
     if (!loader.Load())
         return false;
@@ -127,6 +128,7 @@ bool StartDB()
 /// Close the connection to the database
 void StopDB()
 {
+    DBCDatabase.Close();
     CharacterDatabase.Close();
     WorldDatabase.Close();
     LoginDatabase.Close();

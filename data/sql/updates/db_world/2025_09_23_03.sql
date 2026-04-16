@@ -1,22 +1,11 @@
--- DB update 2025_09_23_02 -> 2025_09_23_03
---
-UPDATE `spell_dbc` SET
-    `Attributes`=384,
-    `CastingTimeIndex`=1,
-    `DurationIndex`=3,
-    `RangeIndex`=7,
-    `EquippedItemClass`=-1,
-    `SchoolMask`=1,
-    `Effect_1`=76,
-    `ImplicitTargetA_1`=18,
-    `EffectMiscValue_1`=185541
-WHERE `Id`=39797;
-
 DELETE FROM `gameobject` WHERE `id`=185541;
 
 UPDATE `creature_template` SET `AIName`='SmartAI', `unit_flags`=768 WHERE  `entry`=22972;
+
 DELETE FROM `smart_scripts` WHERE `entryorguid`=22972 AND `source_type`=0;
+
 DELETE FROM `smart_scripts` WHERE `entryorguid` IN (2297200,2297201,2297202) AND `source_type`=9;
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (22972, 0, 0, 0, 54, 0, 100, 0, 0, 0, 0, 0, 0, 80, 2297200, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Cenarion Sparrowhawk - On Just Summoned - Action list'),
 (22972, 0, 1, 0, 54, 0, 100, 0, 0, 0, 0, 0, 0, 80, 2297201, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Cenarion Sparrowhawk - On Just Summoned - Action list'),
@@ -37,6 +26,7 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 (2297202, 9, 4, 0, 0, 0, 100, 0, 5000, 5000, 0, 0, 0, 41, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Cenarion Sparrowhawk - Action list - Despawn');
 
 DELETE FROM `creature_text` WHERE `CreatureID`=22972;
+
 INSERT INTO `creature_text` (`CreatureID`, `GroupID`, `ID`, `Text`, `Type`, `Language`, `Probability`, `Emote`, `Duration`, `Sound`, `BroadcastTextId`, `TextRange`, `comment`) VALUES
 (22972, 0, 0, "%s looks at you for a moment, then motions for you to follow.", 16, 0, 100, 0, 0, 0, 20689, 0, 'Cenarion Sparrowhawk'),
 (22972, 1, 0, '%s surveys the ground for buried raven stones.', 16, 0, 100, 0, 0, 0, 20675, 0, 'Cenarion Sparrowhawk'),
@@ -44,13 +34,16 @@ INSERT INTO `creature_text` (`CreatureID`, `GroupID`, `ID`, `Text`, `Type`, `Lan
 (22972, 3, 0, "%s doesn't seem to have had any luck finding raven stones nearby.", 16, 0, 100, 0, 0, 0, 21065, 0, 'Cenarion Sparrowhawk');
 
 DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=22  AND `SourceEntry`=22972 AND `SourceId`=0;
+
 INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`, `ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`, `NegativeCondition`, `ErrorType`, `ErrorTextId`, `ScriptName`, `Comment`) VALUES
 (22, 1, 22972, 0, 0, 29, 1, 22986, 40, 0, 1, 0, 0, '', 'Only run SAI if No Invis Rune Stone within 40 yards'),
 (22, 2, 22972, 0, 0, 29, 1, 22986, 40, 0, 0, 0, 0, '', 'Only run SAI if Invis Rune Stone within 40 yards');
 
 SET @CGUID := 132442;
+
 -- Replace ALL with sniffed spawns
 DELETE FROM `creature` WHERE `id1`=22986;
+
 INSERT INTO `creature` (`guid`, `id1`, `id2`, `id3`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `currentwaypoint`, `curhealth`, `curmana`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `ScriptName`, `VerifiedBuild`) VALUES
 (@CGUID+0 , 22986, 0, 0, 530, 3519, 3978, 1, 1, 0, -4180.95, 3124.89, 321.461, 6.14356, 120, 0, 0, 1604, 852, 0, 0, 0, 0, '', 45745),
 (@CGUID+1 , 22986, 0, 0, 530, 3519, 3679, 1, 1, 0, -4116.41, 3212.79, 299.878, 5.55015, 120, 0, 0, 1604, 852, 0, 0, 0, 0, '', 45745),

@@ -1,6 +1,7 @@
 -- DB update 2025_01_28_00 -> 2025_01_31_00
 --
 DELETE FROM `command` WHERE `name` IN ('worldstate sunsreach phase', 'worldstate sunsreach subphase', 'worldstate sunsreach gate');
+
 INSERT INTO `command` (`name`, `security`, `help`) VALUES
 ('worldstate sunsreach phase', 3, 'Syntax: .worldstate sunsreach phase <value>.\nSets the phase of Sun''s Reach.\nValid values are:\n0: Staging Area\n1: Sanctum\n2: Armory\n3: Harbor.'),
 ('worldstate sunsreach subphase', 3, 'Syntax: .worldstate sunsreach subphase <mask>.\nSets the subphase mask of Sun''s Reach.\nValid values are:\n1: Portal\n2: Anvil\n4: Alchemy Lab\n8: Monument\n15: All.'),
@@ -8,26 +9,37 @@ INSERT INTO `command` (`name`, `security`, `help`) VALUES
 
 -- Smith Hauthaa <Weapons & Armorsmith>
 SET @cguidsmith = 93964;
+
 -- Shaani <Jewelcrafting Supplies>
 SET @cguidjc = 94386;
+
 -- Mar'nah <Alchemist>
 SET @cguidalch = 94378;
+
 -- Demonic Crystals
 SET @guidcrystals = 5300500;
+
 -- Alchemy lab
 SET @guidalch = 5300290;
+
 -- Portal Subphase, Shattrath City, Shattered Sun Warrior and Shattered Sun Marksman
 SET @cguidportalshat = 165102;
+
 -- Portal Subphase, Isle of Quel'Danas
 SET @cguidportalisle = 5300070;
+
 -- Dawnblade Blood Knight
 SET @cguidbloodknights = 5300293;
+
 -- Dawnblade Summoner, Dawnblade Marksman
 SET @cguidsummonermarksman = 5300355;
+
 -- Irespeaker
 SET @cguidirespeaker = 5300460;
+
 -- Abyssal Flamewalker, Unleashed Hellion
 SET @cguidflamewalkerhellion = 5300473;
+
 -- Invisible Stalker Floating -> Fel Crystal Spell target
 SET @cguidfelcrystalspelltarget = 5300031;
 
@@ -53,6 +65,7 @@ SET
 @sunwellall          = 119;
 
 DELETE FROM `game_event` WHERE `eventEntry` IN (@sunsreachpone, @sunsreachptwoonly, @sunsreachptwoperm, @sunsreachnoportal, @sunsreachportal, @sunsreachpthreeonly, @sunsreachpthreeperm, @sunsreachnoanvil, @sunsreachanvil, @sunsreachpfour, @sunsreachnomonument, @sunsreachmonument, @sunsreachnolab, @sunsreachlab, @sunsreachkiru, @sunwellnone, @sunwellfirst, @sunwellsecond, @sunwellall);
+
 INSERT INTO `game_event` (`eventEntry`, `start_time`, `end_time`, `occurence`, `length`, `holiday`, `holidayStage`, `description`, `world_event`, `announce`) VALUES
 (@sunsreachpone,       '2000-01-01 14:00:00', '2000-01-01 14:00:00', 5184000, 2592000, 0, 0, 'Sun''s Reach Reclamation Phase 1',              5, 2),
 (@sunsreachptwoonly,   '2000-01-01 14:00:00', '2000-01-01 14:00:00', 5184000, 2592000, 0, 0, 'Sun''s Reach Reclamation Phase 2 Only',         5, 2),
@@ -75,9 +88,11 @@ INSERT INTO `game_event` (`eventEntry`, `start_time`, `end_time`, `occurence`, `
 (@sunwellall,          '2000-01-01 14:00:00', '2000-01-01 14:00:00', 5184000, 2592000, 0, 0, 'SWP - All Gates Open',                          5, 2); -- 0 0 0
 
 UPDATE `creature_template` SET `ScriptName`='npc_suns_reach_reclamation' WHERE `entry` IN (24965,24967,25061,25057,24932,25108,25069,25046,24975,25112,25163);
+
 UPDATE `creature_template` SET `ScriptName`='npc_sunwell_gate' WHERE `entry` = 25169;
 
 DELETE FROM `game_event_creature` WHERE `eventEntry` IN (@sunsreachpone, @sunsreachptwoonly, @sunsreachptwoperm, @sunsreachnoportal, @sunsreachportal, @sunsreachpthreeonly, @sunsreachpthreeperm, @sunsreachnoanvil, @sunsreachanvil, @sunsreachpfour, @sunsreachnomonument, @sunsreachmonument, @sunsreachnolab, @sunsreachlab, @sunsreachkiru, @sunwellnone, @sunwellfirst, @sunwellsecond, @sunwellall, -@sunsreachpone, -@sunsreachptwoonly, -@sunsreachptwoperm, -@sunsreachnoportal, -@sunsreachportal, -@sunsreachpthreeonly, -@sunsreachpthreeperm, -@sunsreachnoanvil, -@sunsreachanvil, -@sunsreachpfour, -@sunsreachnomonument, -@sunsreachmonument, -@sunsreachnolab, -@sunsreachlab, -@sunsreachkiru, -@sunwellnone, -@sunwellfirst, -@sunwellsecond, -@sunwellall);
+
 INSERT INTO `game_event_creature` (`guid`, `eventEntry`) VALUES
 -- Phase 2
 (93950, @sunsreachptwoperm), -- 25061 (Harbinger Inuuro)
@@ -353,6 +368,7 @@ INSERT INTO `game_event_creature` (`guid`, `eventEntry`) VALUES
 (@cguidportalisle+9, @sunsreachportal); -- 24936 (Sunwell Daily Bunny x 0.01)
 
 DELETE FROM `game_event_gameobject` WHERE `eventEntry` IN (@sunsreachpone, @sunsreachptwoonly, @sunsreachptwoperm, @sunsreachnoportal, @sunsreachportal, @sunsreachpthreeonly, @sunsreachpthreeperm, @sunsreachnoanvil, @sunsreachanvil, @sunsreachpfour, @sunsreachnomonument, @sunsreachmonument, @sunsreachnolab, @sunsreachlab, @sunsreachkiru, @sunwellnone, @sunwellfirst, @sunwellsecond, @sunwellall, -@sunsreachpone, -@sunsreachptwoonly, -@sunsreachptwoperm, -@sunsreachnoportal, -@sunsreachportal, -@sunsreachpthreeonly, -@sunsreachpthreeperm, -@sunsreachnoanvil, -@sunsreachanvil, -@sunsreachpfour, -@sunsreachnomonument, -@sunsreachmonument, -@sunsreachnolab, -@sunsreachlab, -@sunsreachkiru, -@sunwellnone, -@sunwellfirst, -@sunwellsecond, -@sunwellall);
+
 INSERT INTO `game_event_gameobject` (`guid`, `eventEntry`) VALUES
 -- Portal
 (47196,   @sunsreachportal), -- 187056, Shattrath Portal to Isle of Quel'Danas
@@ -393,7 +409,9 @@ INSERT INTO `game_event_gameobject` (`guid`, `eventEntry`) VALUES
 (50440, @sunwellsecond); -- 187765, Archonisus, The Third Gate
 
 DELETE FROM `creature_queststarter` WHERE `quest` IN (11514, 11520, 11521, 11523, 11525, 11532, 11533, 11535, 11536, 11537, 11538, 11539, 11540, 11541, 11542, 11543, 11544, 11545, 11546, 11547, 11548, 11549);
+
 DELETE FROM `game_event_creature_quest` WHERE `eventEntry` IN (@sunsreachpone, @sunsreachptwoonly, @sunsreachptwoperm, @sunsreachnoportal, @sunsreachportal, @sunsreachpthreeonly, @sunsreachpthreeperm, @sunsreachnoanvil, @sunsreachanvil, @sunsreachpfour, @sunsreachnomonument, @sunsreachmonument, @sunsreachnolab, @sunsreachlab, @sunsreachkiru, @sunwellnone, @sunwellfirst, @sunwellsecond, @sunwellall);
+
 INSERT INTO `game_event_creature_quest` (`eventEntry`, `id`, `quest`) VALUES
 -- Phase 1
 (@sunsreachpone,       24965, 11524), -- Erratic Behavior
@@ -439,6 +457,7 @@ INSERT INTO `game_event_creature_quest` (`eventEntry`, `id`, `quest`) VALUES
 
 DELETE FROM `gossip_menu` WHERE `MenuID` IN (51000, 51001, 51002, 51003, 51004, 51005, 51006, 51007, 51008, 51009, 51010, 51011, 51012, 51013); -- Custom IDs
 DELETE FROM `gossip_menu` WHERE `MenuID` IN (9046, 9307) AND `TextID` IN (12226, 12304, 12305, 12306);
+
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES
 -- Exarch Nasuun
 (9046,  12226), -- Portal progress
@@ -473,6 +492,7 @@ INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES
 (51013, 12322); -- Monument progress
 
 DELETE FROM `npc_text` WHERE `ID` IN (12306, 12602, 12603, 12605);
+
 INSERT INTO `npc_text` (`ID`, `text0_0`, `text0_1`, `BroadcastTextID0`, `lang0`, `Probability0`, `em0_0`, `em0_1`, `em0_2`, `em0_3`, `em0_4`, `em0_5`, `text1_0`, `text1_1`, `BroadcastTextID1`, `lang1`, `Probability1`, `em1_0`, `em1_1`, `em1_2`, `em1_3`, `em1_4`, `em1_5`, `text2_0`, `text2_1`, `BroadcastTextID2`, `lang2`, `Probability2`, `em2_0`, `em2_1`, `em2_2`, `em2_3`, `em2_4`, `em2_5`, `text3_0`, `text3_1`, `BroadcastTextID3`, `lang3`, `Probability3`, `em3_0`, `em3_1`, `em3_2`, `em3_3`, `em3_4`, `em3_5`, `text4_0`, `text4_1`, `BroadcastTextID4`, `lang4`, `Probability4`, `em4_0`, `em4_1`, `em4_2`, `em4_3`, `em4_4`, `em4_5`, `text5_0`, `text5_1`, `BroadcastTextID5`, `lang5`, `Probability5`, `em5_0`, `em5_1`, `em5_2`, `em5_3`, `em5_4`, `em5_5`, `text6_0`, `text6_1`, `BroadcastTextID6`, `lang6`, `Probability6`, `em6_0`, `em6_1`, `em6_2`, `em6_3`, `em6_4`, `em6_5`, `text7_0`, `text7_1`, `BroadcastTextID7`, `lang7`, `Probability7`, `em7_0`, `em7_1`, `em7_2`, `em7_3`, `em7_4`, `em7_5`, `VerifiedBuild`) VALUES
 (12602, 'All three barriers are fully operational. Consult with Archmage Ne''thul in Sun''s Reach Harbor to aid the effort in unlocking the gates.',                                                                        '', 25535, 0, 1, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
 (12603, 'Agamath, the First Gate has been breached. Two of Kil''jaeden''s most powerful lieutenants, Lady Sacrolash and Grand Warlock Alythess, are now vulnerable to attack.',                                             '', 25534, 0, 1, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -480,6 +500,7 @@ INSERT INTO `npc_text` (`ID`, `text0_0`, `text0_1`, `BroadcastTextID0`, `lang0`,
 (12306, 'Rohendor, the Second Gate has been brought down, but the last of the Sunwell Plateau''s magical barriers, Archonisus, resists us, $n.$B$BMaintain your efforts to assist at the Sunwell in any way that you can.', '', 24234, 0, 1, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 DELETE FROM `gossip_menu_option` WHERE `MenuID` IN (51000, 51001, 51002, 51003);
+
 INSERT INTO `gossip_menu_option` (`MenuID`, `OptionID`, `OptionIcon`, `OptionText`, `OptionBroadcastTextID`, `OptionType`, `OptionNpcFlag`, `ActionMenuID`, `ActionPoiID`, `BoxCoded`, `BoxMoney`, `BoxText`, `BoxBroadcastTextID`, `VerifiedBuild`) VALUES
 (51000, 0, 0, 'I have something else to ask you about.', 24226, 1, 1, 9046, 0, 0, 0, '', 0, 0),
 (51001, 0, 0, 'I have something else to ask you about.', 24226, 1, 1, 9046, 0, 0, 0, '', 0, 0),
@@ -487,6 +508,7 @@ INSERT INTO `gossip_menu_option` (`MenuID`, `OptionID`, `OptionIcon`, `OptionTex
 (51003, 0, 0, 'I have something else to ask you about.', 24226, 1, 1, 9046, 0, 0, 0, '', 0, 0);
 
 DELETE FROM `gossip_menu_option` WHERE `MenuID` = 9046 AND `OptionID` IN (0, 1, 2, 3);
+
 INSERT INTO `gossip_menu_option` (`MenuID`, `OptionID`, `OptionIcon`, `OptionText`, `OptionBroadcastTextID`, `OptionType`, `OptionNpcFlag`, `ActionMenuID`, `ActionPoiID`, `BoxCoded`, `BoxMoney`, `BoxText`, `BoxBroadcastTextID`, `VerifiedBuild`) VALUES
 (9046, 0, 0, 'What news of the fight to take the Sun''s Reach Armory?',                               24222, 1, 1, 51000, 0, 0, 0, '', 0, 0),
 (9046, 1, 0, 'How close are we to the completion of the anvil and forge at the Sun''s Reach Armory?', 24224, 1, 1, 51002, 0, 0, 0, '', 0, 0),
@@ -494,6 +516,7 @@ INSERT INTO `gossip_menu_option` (`MenuID`, `OptionID`, `OptionIcon`, `OptionTex
 (9046, 3, 0, 'Nasuun, do you know how long until we have an alchemy lab at the Sun''s Reach Harbor?', 24229, 1, 1, 51003, 0, 0, 0, '', 0, 0);
 
 DELETE FROM `creature_questender` WHERE `quest` IN (11496, 11513, 11517, 11520, 11524, 11532, 11535, 11538, 11539, 11542, 11545);
+
 INSERT INTO `creature_questender` (`id`, `quest`) VALUES
 (24965, 11524), -- Erratic Behavior
 (24967, 11496), -- The Sanctum Wards
@@ -509,6 +532,7 @@ INSERT INTO `creature_questender` (`id`, `quest`) VALUES
 (25112, 11545); -- A Charitable Donation
 
 DELETE FROM `conditions` WHERE `ConditionTypeOrReference` = 12 AND `ConditionValue1` IN (@sunsreachpone, @sunsreachptwoonly, @sunsreachptwoperm, @sunsreachnoportal, @sunsreachportal, @sunsreachpthreeonly, @sunsreachpthreeperm, @sunsreachnoanvil, @sunsreachanvil, @sunsreachpfour, @sunsreachnomonument, @sunsreachmonument, @sunsreachnolab, @sunsreachlab, @sunsreachkiru, @sunwellnone, @sunwellfirst, @sunwellsecond, @sunwellall);
+
 INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`, `ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`, `NegativeCondition`, `ErrorType`, `ErrorTextId`, `ScriptName`, `Comment`) VALUES
 -- Vindicator Xayann
 (14, 9052, 12240, 0, 0, 12, 0, @sunsreachpone,       0, 0, 0, 0, 0, '', 'Show gossip text if the event ''Sun''s Reach Reclamation Phase 1'' is active'),
@@ -567,60 +591,75 @@ INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry
 -- Staging
 -- Captain Theris Dawnhearth
 DELETE FROM `gossip_menu` WHERE (`MenuID` = 9065) AND (`TextID` IN (12260));
+
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES
 (9065, 12260);
+
 -- Vindicator Xayann
 DELETE FROM `gossip_menu` WHERE (`MenuID` = 9052) AND (`TextID` IN (12240));
+
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES
 (9052, 12240);
 
 -- Sanctum
 -- Battlemage Arynna
 DELETE FROM `gossip_menu` WHERE (`MenuID` = 9064) AND (`TextID` IN (12257));
+
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES
 (9064, 12257);
+
 -- Harbinger Inuuro
 DELETE FROM `gossip_menu` WHERE (`MenuID` = 9063) AND (`TextID` IN (12255));
+
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES
 (9063, 12255);
 
 -- Armory
 -- Magister Ilastar
 DELETE FROM `gossip_menu` WHERE (`MenuID` = 9127) AND (`TextID` IN (12339));
+
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES
 (9127, 12339);
 
 -- Anvil subphase
 -- Smith Hauthaa
 DELETE FROM `gossip_menu` WHERE (`MenuID` = 9087) AND (`TextID` IN (12285));
+
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES
 (9087, 12285);
 
 -- Harbor
 -- Shaani Jewelcrafting Supplies>
 DELETE FROM `gossip_menu` WHERE (`MenuID` = 9198) AND (`TextID` IN (12496));
+
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES
 (9198, 12496);
+
 -- Mar'nah <Alchemist>
 DELETE FROM `gossip_menu` WHERE (`MenuID` = 9050) AND (`TextID` IN (12238));
+
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES
 (9050, 12238);
 
 -- Monument
 DELETE FROM `gossip_menu` WHERE (`MenuID` = 9115) AND (`TextID` IN (12322));
+
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`) VALUES
 (9115, 12322);
 
 -- Portal Subphase Shattrath mobs walking to portal, entering and despawning
 -- Remove Shattrath - Shattered Sun Marksman that should be spawned by Portal Subphase
 DELETE FROM `creature` WHERE (`id1` = 24938) AND (`guid` IN (96656, 96657, 96658));
+
 -- Remove Shattrath - Shattered Sun Warrior that should be spawned by Portal Subphase
 DELETE FROM `creature` WHERE (`id1` = 25115) AND (`guid` IN (96593));
 
 -- Anvil vendor
 -- Smith Hauthaa
 DELETE FROM `npc_vendor` WHERE (`entry` = 25046);
+
 DELETE FROM `game_event_npc_vendor` WHERE (`eventEntry` = @sunsreachanvil) AND `guid` = @cguidsmith;
+
 INSERT INTO `game_event_npc_vendor` (`eventEntry`, `guid`, `slot`, `item`, `maxcount`, `incrtime`, `ExtendedCost`) VALUES
 (@sunsreachanvil, @cguidsmith, 0, 34887, 0, 0, 2059),
 (@sunsreachanvil, @cguidsmith, 0, 34888, 0, 0, 2059),
@@ -682,7 +721,9 @@ INSERT INTO `game_event_npc_vendor` (`eventEntry`, `guid`, `slot`, `item`, `maxc
 
 -- Mar'nah <Alchemist>
 DELETE FROM `npc_vendor` WHERE (`entry` = 24975);
+
 DELETE FROM `game_event_npc_vendor` WHERE (`eventEntry` = @sunsreachlab) AND `guid` = @cguidalch;
+
 INSERT INTO `game_event_npc_vendor` (`eventEntry`, `guid`, `slot`, `item`, `maxcount`, `incrtime`, `ExtendedCost`) VALUES
 (@sunsreachlab, @cguidalch, 0, 3371, 0, 0, 0),
 (@sunsreachlab, @cguidalch, 0, 3372, 0, 0, 0),
@@ -697,7 +738,9 @@ INSERT INTO `game_event_npc_vendor` (`eventEntry`, `guid`, `slot`, `item`, `maxc
 
 -- Shaani <Jewelcrafting Supplies>
 DELETE FROM `npc_vendor` WHERE (`entry` = 25950);
+
 DELETE FROM `game_event_npc_vendor` WHERE (`eventEntry` = @sunsreachlab) AND `guid` = @cguidjc;
+
 INSERT INTO `game_event_npc_vendor` (`eventEntry`, `guid`, `slot`, `item`, `maxcount`, `incrtime`, `ExtendedCost`) VALUES
 (@sunsreachlab, @cguidjc, 0, 32227, 0, 0, 1642),
 (@sunsreachlab, @cguidjc, 0, 32228, 0, 0, 1642),
@@ -751,13 +794,16 @@ INSERT INTO `game_event_npc_vendor` (`eventEntry`, `guid`, `slot`, `item`, `maxc
 -- Shattered Sun Marksman + Warrior Transform Auras
 -- Marksman Transform Auras
 DELETE FROM `smart_scripts` WHERE (`entryorguid` = 24938) AND (`source_type` = 0) AND (`id` IN (3, 4, 5, 6));
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (24938, 0, 3, 0, 11, 0, 100, 0, 0, 0, 0, 0, 0, 0, 88, 2493810, 2493813, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - On Respawn - Run Random Script'),
 (24938, 0, 4, 0, 11, 0, 100, 0, 0, 0, 0, 0, 0, 0, 88, 2493820, 2493823, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - On Respawn - Run Random Script'),
 (24938, 0, 5, 0, 11, 0, 100, 0, 0, 0, 0, 0, 0, 0, 88, 2493830, 2493833, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - On Respawn - Run Random Script'),
 (24938, 0, 6, 0, 11, 0, 100, 0, 0, 0, 0, 0, 0, 0, 88, 2493840, 2493843, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - On Respawn - Run Random Script');
+
 -- Bridge Marksman spawn in Harbor Phase, (hard-coded bunny target GUIDs...)
 DELETE FROM `smart_scripts` WHERE (`entryorguid` IN (-65694, -65695, -65696, -65697, -65698, -65699, -65700, -65702)) AND (`source_type` = 0) AND (`id` IN (1, 2));
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (-65694, 0, 1, 0, 11, 0, 100, 0, 0, 0, 0, 0, 0, 0, 88, 2493830, 2493833, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - On Respawn - Run Script'),
 (-65694, 0, 2, 0, 11, 0, 100, 0, 0, 0, 0, 0, 0, 0, 88, 2493840, 2493843, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - On Respawn - Run Script'),
@@ -777,6 +823,7 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 (-65702, 0, 2, 0, 11, 0, 100, 0, 0, 0, 0, 0, 0, 0, 88, 2493840, 2493843, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - On Respawn - Run Script');
 
 DELETE FROM `smart_scripts` WHERE (`source_type` = 9 AND `entryorguid` BETWEEN 2493810 AND 2493813);
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (2493810, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 44962, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - Actionlist - Cast ''Serverside - Archer - BE Male Transform Tier 1'''),
 (2493811, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 44921, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - Actionlist - Cast ''Serverside - Archer - BE Female Transform Tier 1'''),
@@ -784,6 +831,7 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 (2493813, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 44929, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - Actionlist - Cast ''Serverside - Archer - Draenei Female Transform Tier 1''');
 
 DELETE FROM `smart_scripts` WHERE (`source_type` = 9 AND `entryorguid` BETWEEN 2493820 AND 2493823);
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (2493820, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 44918, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - Actionlist - Cast ''Serverside - Archer - BE Male Transform Tier 2'''),
 (2493821, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 44922, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - Actionlist - Cast ''Serverside - Archer - BE Female Transform Tier 2'''),
@@ -791,6 +839,7 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 (2493823, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 44930, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - Actionlist - Cast ''Serverside - Archer - Draenei Female Transform Tier 2''');
 
 DELETE FROM `smart_scripts` WHERE (`source_type` = 9 AND `entryorguid` BETWEEN 2493830 AND 2493833);
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (2493830, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 44919, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - Actionlist - Cast ''Serverside - Archer - BE Male Transform Tier 3'''),
 (2493831, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 44923, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - Actionlist - Cast ''Serverside - Archer - BE Female Transform Tier 3'''),
@@ -798,6 +847,7 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 (2493833, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 44931, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - Actionlist - Cast ''Serverside - Archer - Draenei Female Transform Tier 3''');
 
 DELETE FROM `smart_scripts` WHERE (`source_type` = 9 AND `entryorguid` BETWEEN 2493840 AND 2493843);
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (2493840, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 44920, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - Actionlist - Cast ''Serverside - Archer - BE Male Transform Tier 4'''),
 (2493841, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 44924, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Marksman - Actionlist - Cast ''Serverside - Archer - BE Female Transform Tier 4'''),
@@ -806,7 +856,9 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 
 -- Shattered Sun Warrior Transform Auras
 UPDATE `creature_template` SET `AIName` = 'SmartAI' WHERE `entry` = 25115;
+
 DELETE FROM `smart_scripts` WHERE (`entryorguid` = 25115) AND (`source_type` = 0);
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (25115, 0, 0, 0, 11, 0, 100, 0, 0, 0, 0, 0, 0, 0, 88, 2511510, 2511513, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Warrior - On Respawn - Run Random Script'),
 (25115, 0, 1, 0, 11, 0, 100, 0, 0, 0, 0, 0, 0, 0, 88, 2511520, 2511523, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Warrior - On Respawn - Run Random Script'),
@@ -814,6 +866,7 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 (25115, 0, 3, 0, 11, 0, 100, 0, 0, 0, 0, 0, 0, 0, 88, 2511540, 2511543, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Warrior - On Respawn - Run Random Script');
 
 DELETE FROM `smart_scripts` WHERE (`source_type` = 9 AND `entryorguid` BETWEEN 2511510 AND 2511513);
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (2511510, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 45159, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Warrior - Actionlist - Cast ''Serverside - Warrior - BE Male Transform Tier 1'''),
 (2511511, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 45155, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Warrior - Actionlist - Cast ''Serverside - Warrior - BE Female Transform Tier 1'''),
@@ -821,6 +874,7 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 (2511513, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 45163, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Warrior - Actionlist - Cast ''Serverside - Warrior - Draenei Female Transform Tier 1''');
 
 DELETE FROM `smart_scripts` WHERE (`source_type` = 9 AND `entryorguid` BETWEEN 2511520 AND 2511523);
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (2511520, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 45160, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Warrior - Actionlist - Cast ''Serverside - Warrior - BE Male Transform Tier 2'''),
 (2511521, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 45156, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Warrior - Actionlist - Cast ''Serverside - Warrior - BE Female Transform Tier 2'''),
@@ -828,6 +882,7 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 (2511523, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 45164, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Warrior - Actionlist - Cast ''Serverside - Warrior - Draenei Female Transform Tier 2''');
 
 DELETE FROM `smart_scripts` WHERE (`source_type` = 9 AND `entryorguid` BETWEEN 2511530 AND 2511533);
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (2511530, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 45161, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Warrior - Actionlist - Cast ''Serverside - Warrior - BE Male Transform Tier 3'''),
 (2511531, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 45157, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Warrior - Actionlist - Cast ''Serverside - Warrior - BE Female Transform Tier 3'''),
@@ -835,6 +890,7 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 (2511533, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 45165, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Warrior - Actionlist - Cast ''Serverside - Warrior - Draenei Female Transform Tier 3''');
 
 DELETE FROM `smart_scripts` WHERE (`source_type` = 9 AND `entryorguid` BETWEEN 2511540 AND 2511543);
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (2511540, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 45162, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Warrior - Actionlist - Cast ''Serverside - Warrior - BE Male Transform Tier 4'''),
 (2511541, 9, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 11, 45158, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Shattered Sun Warrior - Actionlist - Cast ''Serverside - Warrior - BE Female Transform Tier 4'''),
@@ -843,6 +899,7 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 
 -- Marksman SAI conditions
 DELETE FROM `conditions` WHERE (`SourceTypeOrReferenceId` = 22) AND (`SourceGroup` IN (4, 5, 6, 7)) AND (`SourceEntry` = 24938) AND (`SourceId` = 0);
+
 INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`, `ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`, `NegativeCondition`, `ErrorType`, `ErrorTextId`, `ScriptName`, `Comment`) VALUES
 -- Tier 1: !anvil && !p4 (!@sunsreachanvil && !@sunsreachpfour)
 (22, 4, 24938, 0, 0, 12, 1, @sunsreachanvil, 0, 0, 1, 0, 0, '', 'if the event ''Sun''s Reach Reclamation Phase Anvil'' is not active'),
@@ -856,8 +913,10 @@ INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry
 -- Tier 4: p4 && anvil (@sunsreachpfour && @sunsreachanvil)
 (22, 7, 24938, 0, 0, 12, 1, @sunsreachpfour, 0, 0, 0, 0, 0, '', 'if the event ''Sun''s Reach Reclamation Phase Harbor'' is active'),
 (22, 7, 24938, 0, 0, 12, 1, @sunsreachanvil, 0, 0, 0, 0, 0, '', 'if the event ''Sun''s Reach Reclamation Phase Anvil'' is active');
+
 -- Bridge Marksman SAI conditions
 DELETE FROM `conditions` WHERE (`SourceTypeOrReferenceId` = 22) AND (`SourceGroup` IN (2, 3)) AND (`SourceEntry` IN (-65694, -65695, -65696, -65697, -65698, -65699, -65700, -65702)) AND (`SourceId` = 0);
+
 INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`, `ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`, `NegativeCondition`, `ErrorType`, `ErrorTextId`, `ScriptName`, `Comment`) VALUES
 -- Tier 3: p4 && !anvil (@sunsreachpfour && !@sunsreachanvil)
 (22, 2, -65694, 0, 0, 12, 1, @sunsreachpfour, 0, 0, 0, 0, 0, '', 'if the event ''Sun''s Reach Reclamation Phase Harbor'' is active'),
@@ -910,6 +969,7 @@ INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry
 
 -- Warrior SAI conditions
 DELETE FROM `conditions` WHERE (`SourceTypeOrReferenceId` = 22) AND (`SourceGroup` IN (1, 2, 3, 4)) AND (`SourceEntry` = 25115) AND (`SourceId` = 0);
+
 INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`, `ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`, `NegativeCondition`, `ErrorType`, `ErrorTextId`, `ScriptName`, `Comment`) VALUES
 -- Tier 1: !anvil && !p4 (!@sunsreachanvil && !@sunsreachpfour)
 (22, 1, 25115, 0, 0, 12, 1, @sunsreachanvil, 0, 0, 1, 0, 0, '', 'if the event ''Sun''s Reach Reclamation Phase Anvil'' is not active'),
@@ -927,10 +987,13 @@ INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry
 -- Gameobjects
 -- Alchemy Lab
 DELETE FROM `gameobject` WHERE (`id` = 187115) AND (`guid` IN (@guidalch));
+
 INSERT INTO `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`, `ScriptName`, `VerifiedBuild`) VALUES
 (@guidalch, 187115, 530, 4080, 4087, 1, 1, 12845.603516, -7011.98584, 18.592701, 5.543178, 0, 0, 0, 0, 0, 0, 0, '', 0);
+
 -- Demonic Crystals
 DELETE FROM `gameobject` WHERE `id` = 187120 AND `guid` BETWEEN @guidcrystals AND @guidcrystals+4;
+
 INSERT INTO `gameobject` (`guid`, `id`, `map`, `spawnMask`, `phaseMask`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `VerifiedBuild`, `Comment`) VALUES
 (@guidcrystals+0, 187120, 530, 1, 1, 12685.7998046875, -6925.830078125, 39.61629867553711, 2.4260098934173584, 0.0, 0.0, 0.9366719722747804, 0.3502070009708404, 180, 0, ''),
 (@guidcrystals+1, 187120, 530, 1, 1, 12707.7998046875, -6938.7900390625, 40.44039916992188, 1.815140008926392, 0.0, 0.0, 0.7880110144615173, 0.6156619787216187, 180, 0, ''),
@@ -941,6 +1004,7 @@ INSERT INTO `gameobject` (`guid`, `id`, `map`, `spawnMask`, `phaseMask`, `positi
 -- Creatures
 -- Portal Subphase, Shattrath City, Shattered Sun Warrior and Shattered Sun Marksman
 DELETE FROM `creature` WHERE `id1` IN (25115, 24938) AND `guid` BETWEEN @cguidportalshat AND @cguidportalshat+7;
+
 -- spawntimesecs 30-120s, 75s avg
 INSERT INTO `creature` (`guid`, `id1`, `map`, `spawnMask`, `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `MovementType`, `VerifiedBuild`, `Comment`) VALUES
 (@cguidportalshat+0, 25115, 530, 1, 1, 1, -1983.31005859375, 5491.89013671875, -12.344799995422363, 0.1725849956274032, 75, 2, 0, ''),
@@ -953,6 +1017,7 @@ INSERT INTO `creature` (`guid`, `id1`, `map`, `spawnMask`, `phaseMask`, `equipme
 (@cguidportalshat+7, 24938, 530, 1, 1, 1, -1799.050048828125, 5549.31982421875, -12.344799995422363, 5.026549816131592, 75, 2, 0, '');
 
 DELETE FROM `waypoint_data` WHERE `id` = (@cguidportalshat+0)*10;
+
 INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `position_z`, `orientation`, `delay`, `move_type`, `action`) VALUES
 ((@cguidportalshat+0)*10, 1, -1983.33, 5492.03, -12.4281, 0.0, 250, 1, 0),
 ((@cguidportalshat+0)*10, 2, -1941.97, 5499.10, -12.4281, 0.0, 0, 1, 0),
@@ -963,6 +1028,7 @@ INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `positio
 ((@cguidportalshat+0)*10, 7, -1841.89, 5499.54, -12.4281, 1.23, 5000, 1, @cguidportalshat*10);
 
 DELETE FROM `waypoint_data` WHERE `id` = (@cguidportalshat+1)*10;
+
 INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `position_z`, `orientation`, `delay`, `move_type`, `action`) VALUES
 ((@cguidportalshat+1)*10, 1, -1866.18, 5519.39, -12.4281, 0.0, 250, 1, 0),
 ((@cguidportalshat+1)*10, 2, -1889.29, 5514.19, -12.4281, 0.0, 0, 1, 0),
@@ -973,6 +1039,7 @@ INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `positio
 ((@cguidportalshat+1)*10, 7, -1840.91, 5499.92, -12.4280, 1.23, 5000, 1, @cguidportalshat*10);
 
 DELETE FROM `waypoint_data` WHERE `id` = (@cguidportalshat+2)*10;
+
 INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `position_z`, `orientation`, `delay`, `move_type`, `action`) VALUES
 ((@cguidportalshat+2)*10, 1, -1954.96, 5432.12, -12.4281, 0.0, 250, 1, 0),
 ((@cguidportalshat+2)*10, 2, -1947.68, 5405.70, -12.4281, 0.0, 0, 1, 0),
@@ -983,6 +1050,7 @@ INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `positio
 ((@cguidportalshat+2)*10, 7, -1840.05, 5499.26, -12.4280, 1.23, 5000, 1, @cguidportalshat*10);
 
 DELETE FROM `waypoint_data` WHERE `id` = (@cguidportalshat+3)*10;
+
 INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `position_z`, `orientation`, `delay`, `move_type`, `action`) VALUES
 ((@cguidportalshat+3)*10, 1, -1753.56, 5495.54, -12.4281, 0.0, 250, 1, 0),
 ((@cguidportalshat+3)*10, 2, -1791.01, 5467.76, -12.4281, 0.0, 0, 1, 0),
@@ -991,6 +1059,7 @@ INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `positio
 ((@cguidportalshat+3)*10, 5, -1840.24, 5498.82, -12.4281, 1.23, 5000, 1, @cguidportalshat*10);
 
 DELETE FROM `waypoint_data` WHERE `id` = (@cguidportalshat+4)*10;
+
 INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `position_z`, `orientation`, `delay`, `move_type`, `action`) VALUES
 ((@cguidportalshat+4)*10, 1, -1941.15, 5487.12, -12.42811, 0.0, 250, 1, 0),
 ((@cguidportalshat+4)*10, 2, -1914.21, 5504.99, -12.42810, 0.0, 0, 1, 0),
@@ -1001,6 +1070,7 @@ INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `positio
 ((@cguidportalshat+4)*10, 7, -1839.51, 5498.56, -12.42810, 1.23, 5000, 1, @cguidportalshat*10);
 
 DELETE FROM `waypoint_data` WHERE `id` = (@cguidportalshat+5)*10;
+
 INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `position_z`, `orientation`, `delay`, `move_type`, `action`) VALUES
 ((@cguidportalshat+5)*10, 1, -1958.15, 5418.13, -12.4281, 0.0, 250, 1, 0),
 ((@cguidportalshat+5)*10, 2, -1937.75, 5396.30, -12.4281, 0.0, 0, 1, 0),
@@ -1011,6 +1081,7 @@ INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `positio
 ((@cguidportalshat+5)*10, 7, -1841.45, 5499.37, -12.4281, 1.23, 5000, 1, @cguidportalshat*10);
 
 DELETE FROM `waypoint_data` WHERE `id` = (@cguidportalshat+6)*10;
+
 INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `position_z`, `orientation`, `delay`, `move_type`, `action`) VALUES
 ((@cguidportalshat+6)*10, 1, -1771.40, 5424.44, -12.4281, 0.0, 250, 1, 0),
 ((@cguidportalshat+6)*10, 2, -1780.13, 5458.50, -12.4281, 0.0, 0, 1, 0),
@@ -1020,6 +1091,7 @@ INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `positio
 ((@cguidportalshat+6)*10, 6, -1840.07, 5498.43, -12.4281, 1.23, 5000, 1, @cguidportalshat*10);
 
 DELETE FROM `waypoint_data` WHERE `id` = (@cguidportalshat+7)*10;
+
 INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `position_z`, `orientation`, `delay`, `move_type`, `action`) VALUES
 ((@cguidportalshat+7)*10, 1, -1799.13, 5549.21,0 -12.42810, 0.0, 250, 1, 0),
 ((@cguidportalshat+7)*10, 2, -1786.30, 5503.25,0 -12.42810, 0.0, 0, 1, 0),
@@ -1029,6 +1101,7 @@ INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `positio
 ((@cguidportalshat+7)*10, 6, -1840.02, 5499.12,0 -12.42810, 1.23, 5000, 1, @cguidportalshat*10);
 
 DELETE FROM `waypoint_scripts` WHERE `id` = @cguidportalshat*10 AND `guid` BETWEEN (@cguidportalshat*10) AND (@cguidportalshat*10)+2;
+
 INSERT INTO `waypoint_scripts` (`id`, `delay`, `command`, `datalong`, `datalong2`, `dataint`, `x`, `y`, `z`, `o`, `guid`) VALUES
 (@cguidportalshat*10, 0, 15, 34427, 1, 0, 0.0, 0.0, 0.0, 0.0, (@cguidportalshat*10)+0),
 (@cguidportalshat*10, 0, 1, 66, 0, 0, 0.0, 0.0, 0.0, 0.0, (@cguidportalshat*10)+1),
@@ -1036,6 +1109,7 @@ INSERT INTO `waypoint_scripts` (`id`, `delay`, `command`, `datalong`, `datalong2
 
 -- Set `path_id` for the above creatures
 DELETE FROM `creature_addon` WHERE `guid` BETWEEN @cguidportalshat AND @cguidportalshat+7;
+
 INSERT INTO `creature_addon` (`guid`, `path_id`, `mount`, `bytes1`, `bytes2`, `emote`, `visibilityDistanceType`, `auras`) VALUES
 (@cguidportalshat+0, (@cguidportalshat+0)*10, 0, 0, 0, 45, 0, NULL),
 (@cguidportalshat+1, (@cguidportalshat+1)*10, 0, 0, 0, 45, 0, NULL),
@@ -1048,6 +1122,7 @@ INSERT INTO `creature_addon` (`guid`, `path_id`, `mount`, `bytes1`, `bytes2`, `e
 
 -- Portal Subphase, Isle of Quel'Danas
 DELETE FROM `creature` WHERE `id1` = 24936 AND `guid` BETWEEN @cguidportalisle AND @cguidportalisle+9;
+
 INSERT INTO `creature` (`guid`, `id1`, `map`, `spawnMask`, `phaseMask`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `MovementType`, `VerifiedBuild`, `Comment`) VALUES
 (@cguidportalisle+0, 24936, 530, 1, 1, -1842.9300537109373, 5509.740234375, -12.184900283813477, 5.039340019226073, 300, 0, 0, ''),
 (@cguidportalisle+1, 24936, 530, 1, 1, -1841.0500488281248, 5510.43994140625, -10.386300086975098, 4.83420991897583, 300, 0, 0, ''),
@@ -1062,6 +1137,7 @@ INSERT INTO `creature` (`guid`, `id1`, `map`, `spawnMask`, `phaseMask`, `positio
 
 -- Dawnblade Blood Knight
 DELETE FROM `creature` WHERE `id1` = 24976 AND `guid` BETWEEN @cguidbloodknights AND @cguidbloodknights+22;
+
 INSERT INTO `creature` (`guid`, `id1`, `map`, `spawnMask`, `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `MovementType`, `VerifiedBuild`, `Comment`) VALUES
 (@cguidbloodknights+00, 24976, 530, 1, 1, 1, 12873.400390625, -6957.669921875, 3.931679964065552, 1.5707999467849731, 300, 0.0, 0, 0, ''),
 (@cguidbloodknights+01, 24976, 530, 1, 1, 1, 12874.599609375, -6958.58984375, 3.9531400203704834, 0.5235990285873413, 300, 0.0, 0, 0, ''),
@@ -1089,6 +1165,7 @@ INSERT INTO `creature` (`guid`, `id1`, `map`, `spawnMask`, `phaseMask`, `equipme
 
 -- Dawnblade Summoner, Dawnblade Marksman
 DELETE FROM `creature` WHERE `id1` IN (24978, 24979) AND `guid` BETWEEN @cguidsummonermarksman AND @cguidsummonermarksman+60;
+
 INSERT INTO `creature` (`guid`, `id1`, `map`, `spawnMask`, `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `MovementType`, `VerifiedBuild`, `Comment`) VALUES
 (@cguidsummonermarksman+00, 24978, 530, 1, 1, 1, 12798.2998046875, -6996.10009765625, 47.56069946289063, 1.2217299938201904, 300, 0.0, 0, 0, ''),
 (@cguidsummonermarksman+01, 24978, 530, 1, 1, 1, 12820.2001953125, -7040.509765625, 18.676000595092773, 2.164210081100464, 300, 0.0, 0, 0, ''),
@@ -1137,6 +1214,7 @@ INSERT INTO `creature` (`guid`, `id1`, `map`, `spawnMask`, `phaseMask`, `equipme
 
 -- Irespeaker
 DELETE FROM `creature` WHERE `id1` = 24999 AND `guid` BETWEEN @cguidirespeaker AND @cguidirespeaker+5;
+
 INSERT INTO `creature` (`guid`, `id1`, `map`, `spawnMask`, `phaseMask`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `MovementType`, `VerifiedBuild`, `Comment`) VALUES
 (@cguidirespeaker+0, 24999, 530, 1, 1, 12702.7001953125, -6942.97021484375, 36.3202018737793, 0.4014259874820709, 300, 0.0, 0, 0, ''),
 (@cguidirespeaker+1, 24999, 530, 1, 1, 12684.599609375, -6933.43994140625, 36.32070159912109, 1.6231600046157837, 300, 0.0, 0, 0, ''),
@@ -1147,6 +1225,7 @@ INSERT INTO `creature` (`guid`, `id1`, `map`, `spawnMask`, `phaseMask`, `positio
 
 -- Abyssal Flamewalker, Unleashed Hellion
 DELETE FROM `creature` WHERE `id1` IN (25001, 25002) AND `guid` BETWEEN @cguidflamewalkerhellion AND @cguidflamewalkerhellion+30;
+
 INSERT INTO `creature` (`guid`, `id1`, `map`, `spawnMask`, `phaseMask`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `MovementType`, `VerifiedBuild`, `Comment`) VALUES
 (@cguidflamewalkerhellion+00, 25001, 530, 1, 1, 12692.0, -7107.39990234375, 19.421600341796875, 6.03203010559082, 300, 8.0, 1, 0, ''),
 (@cguidflamewalkerhellion+01, 25001, 530, 1, 1, 12663.7001953125, -7082.509765625, 19.48740005493164, 4.04925012588501, 300, 8.0, 1, 0, ''),
@@ -1170,6 +1249,7 @@ INSERT INTO `creature` (`guid`, `id1`, `map`, `spawnMask`, `phaseMask`, `positio
 
 -- Invisible Stalker Floating -> Fel Crystal Spell target
 DELETE FROM `creature` WHERE `id1` = 25953 AND `guid` BETWEEN @cguidfelcrystalspelltarget AND @cguidfelcrystalspelltarget+4;
+
 INSERT INTO `creature` (`guid`, `id1`, `map`, `spawnMask`, `phaseMask`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `MovementType`, `VerifiedBuild`, `Comment`) VALUES
 (@cguidfelcrystalspelltarget+0, 25953, 530, 1, 1, 12707.900390625, -6938.85009765625, 39.885299682617195, 6.24828004837036, 300, 0.0, 0, 0, ''),
 (@cguidfelcrystalspelltarget+1, 25953, 530, 1, 1, 12685.900390625, -6925.9501953125, 39.12950134277344, 3.4906599521636963, 300, 0.0, 0, 0, ''),
@@ -1179,9 +1259,12 @@ INSERT INTO `creature` (`guid`, `id1`, `map`, `spawnMask`, `phaseMask`, `positio
 
 -- Abyssal Flamewalker
 DELETE FROM `creature_addon` WHERE (`guid` = 5300476);
+
 INSERT INTO `creature_addon` (`guid`, `path_id`, `mount`, `bytes1`, `bytes2`, `emote`, `visibilityDistanceType`, `auras`) VALUES
 (5300476, 53004760, 0, 0, 1, 0, 0, '');
+
 DELETE FROM `waypoint_data` WHERE `id` = 53004760;
+
 INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `position_z`, `orientation`, `delay`, `move_type`, `action`, `action_chance`, `wpguid`) VALUES
 (53004760, 1, 12728.2, -6945.38, 14.3328, NULL, 0, 0, 0, 100, 0),
 (53004760, 2, 12728.0, -6963.33, 17.2544, NULL, 0, 0, 0, 100, 0),
@@ -1190,12 +1273,9 @@ INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `positio
 
 -- Fix Dawnblade Marksman not showing bow
 DELETE FROM `smart_scripts` WHERE (`entryorguid` = 24979) AND (`source_type` = 0) AND (`id` IN (2));
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (24979, 0, 2, 0, 25, 0, 100, 0, 0, 0, 0, 0, 0, 0, 40, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Dawnblade Marksman - On Reset - Set Sheath Ranged');
-
--- Do not remove transform auras on evade
--- SPELL_ATTR1_AURA_STAYS_AFTER_COMBAT = 0x02000000, // TITLE Aura stays after combat DESCRIPTION Aura will not be removed when the unit leaves combat
-UPDATE `spell_dbc` SET `AttributesEx`=`AttributesEx`|(0x02000000) WHERE `ID` IN (44918, 44919, 44920, 44921, 44922, 44923, 44924, 44925, 44926, 44927, 44928, 44929, 44930, 44931, 44932, 44962, 45155, 45156, 45157, 45158, 45159, 45160, 45161, 45162, 45163, 45164, 45165, 45166, 45167, 45168, 45169, 45170);
 
 -- Close First, Second, Third Gate
 UPDATE `gameobject` SET `state` = 1 WHERE `id` IN (187766, 187765, 187764) AND `guid` IN (50441, 50440, 50439);

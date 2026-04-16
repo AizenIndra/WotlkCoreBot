@@ -2,6 +2,7 @@
 
 -- Add sniffed Waypoints
 DELETE FROM `waypoint_data` WHERE (`id` IN (12641600, 12641900, 12642000, 12640000, 12639700));
+
 INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `position_z`, `orientation`, `delay`, `move_type`, `action`, `action_chance`, `wpguid`) VALUES
 (12641600, 1, 3122.1736, 532.6602, 88.01989, NULL, 0, 0, 0, 100, 0),
 (12641600, 2, 3125.966, 508.25412, 88.542816, NULL, 0, 0, 0, 100, 0),
@@ -81,32 +82,41 @@ INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `positio
 (12639700, 7, 3347.2444, 636.7253, 85.3196, NULL, 0, 0, 0, 100, 0),
 (12639700, 8, 3331.8745, 656.21674, 85.11536, NULL, 0, 0, 0, 100, 0);
 
--- Add Spell Difficulty (Devotion Aura)
-DELETE FROM `spelldifficulty_dbc` WHERE (`ID` IN (57740));
-INSERT INTO `spelldifficulty_dbc` (`ID`,`DifficultySpellID_1`,`DifficultySpellID_2`,`DifficultySpellID_3`,`DifficultySpellID_4`) VALUES
-(57740, 57740, 58944, 0, 0);
-
 -- Remove auras from Onyx Brood General
 UPDATE `creature_template_addon` SET `auras` = '' WHERE (`entry` IN (30680, 30999));
 
 -- Update SP, MT and WD (sniffed values)
 UPDATE `creature` SET `position_x` = 3123.9624, `position_y` = 563.4905, `position_z` = 89.08344, `orientation` = 4.43663, `MovementType` = 2, `wander_distance` = 0, `VerifiedBuild` = 64481 WHERE (`id1` = 30453) AND `guid` = 126416;
+
 UPDATE `creature` SET `position_x` = 3125.977, `position_y` = 574.3518, `position_z` = 86.13242, `orientation` = 5.34753, `MovementType` = 0, `wander_distance` = 0, `VerifiedBuild` = 64481 WHERE (`id1` = 30453) AND `guid` = 126417;
+
 UPDATE `creature` SET `position_x` = 3181.6206, `position_y` = 604.76, `position_z` = 60.37278, `orientation` = 5.04935, `MovementType` = 0, `wander_distance` = 0, `VerifiedBuild` = 64481 WHERE (`id1` = 30453) AND `guid` = 126418;
+
 UPDATE `creature` SET `position_x` = 3177.7805, `position_y` = 616.0001, `position_z` = 64.20651, `orientation` = 4.54553, `MovementType` = 2, `wander_distance` = 0, `VerifiedBuild` = 64481 WHERE (`id1` = 30453) AND `guid` = 126419;
+
 UPDATE `creature` SET `position_x` = 3391.5247, `position_y` = 554.5057, `position_z` = 94.93257, `orientation` = 4.43663, `MovementType` = 2, `wander_distance` = 0, `VerifiedBuild` = 64481 WHERE (`id1` = 30453) AND `guid` = 126420;
+
 UPDATE `creature` SET `position_x` = 3393.2766, `position_y` = 567.3406, `position_z` = 91.24738, `orientation` = 4.13784, `MovementType` = 0, `wander_distance` = 0, `VerifiedBuild` = 64481 WHERE (`id1` = 30453) AND `guid` = 126421;
+
 UPDATE `creature` SET `position_x` = 3149.0312, `position_y` = 668.306, `position_z` = 79.01899, `orientation` = 3.24923, `MovementType` = 2, `wander_distance` = 0, `VerifiedBuild` = 64481 WHERE (`id1` = 30680) AND `guid` = 126400;
+
 UPDATE `creature` SET `position_x` = 3351.0344, `position_y` = 636.5978, `position_z` = 85.80331, `orientation` = 3.10852, `MovementType` = 2, `wander_distance` = 0, `VerifiedBuild` = 64481 WHERE (`id1` = 30680) AND `guid` = 126397;
+
 UPDATE `creature` SET `position_x` = 3361.3906, `position_y` = 625.84937, `position_z` = 87.20121, `orientation` = 3.07296, `MovementType` = 0, `wander_distance` = 0, `VerifiedBuild` = 64481 WHERE (`id1` = 30682) AND `guid` = 126407;
+
 UPDATE `creature` SET `position_x` = 3149.0798, `position_y` = 677.131, `position_z` = 81.535164, `orientation` = 4.61926, `MovementType` = 0, `wander_distance` = 0, `VerifiedBuild` = 64481 WHERE (`id1` = 30682) AND `guid` = 126412;
+
 UPDATE `creature` SET `position_x` = 3157.8823, `position_y` = 666.0498, `position_z` = 77.16373, `orientation` = 3.85403, `MovementType` = 0, `wander_distance` = 0, `VerifiedBuild` = 64481 WHERE (`id1` = 30682) AND `guid` = 126408;
+
 UPDATE `creature` SET `position_x` = 3351.464, `position_y` = 627.4477, `position_z` = 85.05361, `orientation` = 2.89519, `MovementType` = 0, `wander_distance` = 0, `VerifiedBuild` = 64481 WHERE (`id1` = 30681) AND `guid` = 126401;
+
 UPDATE `creature` SET `position_x` = 3160.2383, `position_y` = 676.69977, `position_z` = 80.68675, `orientation` = 4.17643, `MovementType` = 0, `wander_distance` = 0, `VerifiedBuild` = 64481 WHERE (`id1` = 30681) AND `guid` = 126405;
+
 UPDATE `creature` SET `position_x` = 3361.7314, `position_y` = 635.8682, `position_z` = 87.79267, `orientation` = 3.46105, `MovementType` = 0, `wander_distance` = 0, `VerifiedBuild` = 64481 WHERE (`id1` = 30681) AND `guid` = 126406;
 
 -- Set creature formations
 DELETE FROM `creature_formations` WHERE (`leaderGUID` IN (126416, 126419, 126420, 126397, 126400));
+
 INSERT INTO `creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`, `point_1`, `point_2`) VALUES
 (126416, 126416, 0, 0, 515, 0, 0),
 (126416, 126417, 10, 180, 515, 0, 0),
@@ -125,6 +135,7 @@ INSERT INTO `creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, 
 
 -- Set Waypoints
 DELETE FROM `creature_addon` WHERE (`guid` IN (126416, 126419, 126420, 126400, 126397));
+
 INSERT INTO `creature_addon` (`guid`, `path_id`, `mount`, `bytes1`, `bytes2`, `emote`, `visibilityDistanceType`, `auras`) VALUES
 (126416, 12641600, 0, 0, 1, 0, 0, NULL),
 (126419, 12641900, 0, 0, 1, 0, 0, NULL),
@@ -136,6 +147,7 @@ INSERT INTO `creature_addon` (`guid`, `path_id`, `mount`, `bytes1`, `bytes2`, `e
 UPDATE `creature_template` SET `AIName` = 'SmartAI' WHERE (`entry` IN (30453, 30680));
 
 DELETE FROM `smart_scripts` WHERE (`source_type` = 0) AND (`entryorguid` IN (30453, 30680));
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (30453, 0, 0, 0, 0, 0, 100, 0, 7000, 9000, 17000, 18000, 0, 0, 11, 57728, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 'Onyx Sanctum Guardian - In Combat - Cast \'Shockwave\''),
 (30453, 0, 1, 0, 0, 0, 100, 0, 13000, 13000, 30000, 30000, 0, 0, 11, 39647, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 'Onyx Sanctum Guardian - In Combat - Cast \'Curse of Mending\''),

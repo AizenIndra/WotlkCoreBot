@@ -31,6 +31,7 @@ using QueryResultPromise = std::promise<QueryResult>;
 class CharacterDatabaseConnection;
 class LoginDatabaseConnection;
 class WorldDatabaseConnection;
+class DBCDatabaseConnection;
 
 #ifdef MOD_PLAYERBOTS
 class PlayerbotsDatabaseConnection;
@@ -44,6 +45,7 @@ class PreparedStatement;
 using CharacterDatabasePreparedStatement = PreparedStatement<CharacterDatabaseConnection>;
 using LoginDatabasePreparedStatement = PreparedStatement<LoginDatabaseConnection>;
 using WorldDatabasePreparedStatement = PreparedStatement<WorldDatabaseConnection>;
+using DBCDatabasePreparedStatement = PreparedStatement<DBCDatabaseConnection>;
 
 #ifdef MOD_PLAYERBOTS
 using PlayerbotsDatabasePreparedStatement = PreparedStatement<PlayerbotsDatabaseConnection>;
@@ -77,6 +79,7 @@ using SQLTransaction = std::shared_ptr<Transaction<T>>;
 using CharacterDatabaseTransaction = SQLTransaction<CharacterDatabaseConnection>;
 using LoginDatabaseTransaction = SQLTransaction<LoginDatabaseConnection>;
 using WorldDatabaseTransaction = SQLTransaction<WorldDatabaseConnection>;
+using DBCDatabaseTransaction = SQLTransaction<DBCDatabaseConnection>;
 
 #ifdef MOD_PLAYERBOTS
 using PlayerbotsDatabaseTransaction = SQLTransaction<PlayerbotsDatabaseConnection>;
@@ -92,6 +95,7 @@ class SQLQueryHolder;
 using CharacterDatabaseQueryHolder = SQLQueryHolder<CharacterDatabaseConnection>;
 using LoginDatabaseQueryHolder = SQLQueryHolder<LoginDatabaseConnection>;
 using WorldDatabaseQueryHolder = SQLQueryHolder<WorldDatabaseConnection>;
+using DBCDatabaseQueryHolder = SQLQueryHolder<DBCDatabaseConnection>;
 
 #ifdef MOD_PLAYERBOTS
 using PlayerbotsDatabaseQueryHolder = SQLQueryHolder<PlayerbotsDatabaseConnection>;

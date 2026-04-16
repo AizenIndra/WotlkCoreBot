@@ -291,6 +291,7 @@ int main(int argc, char** argv)
         METRIC_VALUE("db_queue_login", uint64(LoginDatabase.QueueSize()));
         METRIC_VALUE("db_queue_character", uint64(CharacterDatabase.QueueSize()));
         METRIC_VALUE("db_queue_world", uint64(WorldDatabase.QueueSize()));
+        METRIC_VALUE("db_queue_dbc", uint64(DBCDatabase.QueueSize()));
     });
 
     METRIC_EVENT("events", "Worldserver started", "");
@@ -429,7 +430,8 @@ bool StartDB()
     loader
         .AddDatabase(LoginDatabase, "Login")
         .AddDatabase(CharacterDatabase, "Character")
-        .AddDatabase(WorldDatabase, "World");
+        .AddDatabase(WorldDatabase, "World")
+        .AddDatabase(DBCDatabase, "Dbc");
 
     if (!loader.Load())
         return false;
@@ -480,6 +482,7 @@ bool StartDB()
 
 void StopDB()
 {
+    DBCDatabase.Close();
     CharacterDatabase.Close();
     WorldDatabase.Close();
     LoginDatabase.Close();
@@ -575,6 +578,7 @@ void WorldUpdateLoop()
     LoginDatabase.WarnAboutSyncQueries(true);
     CharacterDatabase.WarnAboutSyncQueries(true);
     WorldDatabase.WarnAboutSyncQueries(true);
+    DBCDatabase.WarnAboutSyncQueries(true);
 
     sScriptMgr->OnDatabaseWarnAboutSyncQueries(true);
 
@@ -612,6 +616,7 @@ void WorldUpdateLoop()
     LoginDatabase.WarnAboutSyncQueries(false);
     CharacterDatabase.WarnAboutSyncQueries(false);
     WorldDatabase.WarnAboutSyncQueries(false);
+    DBCDatabase.WarnAboutSyncQueries(false);
 }
 
 void SignalHandler(boost::system::error_code const& error, int /*signalNumber*/)

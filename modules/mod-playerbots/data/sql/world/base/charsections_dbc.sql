@@ -1,14 +1,3 @@
-DROP TABLE IF EXISTS `charsections_dbc`;
-CREATE TABLE `charsections_dbc` (
-  `Id` INT NOT NULL DEFAULT '0',
-  `Race` INT NOT NULL DEFAULT '0',
-  `Gender` INT NOT NULL DEFAULT '0',
-  `GenType` INT NOT NULL DEFAULT '0',
-  `TexturePath1` VARCHAR(100) DEFAULT NULL,
-  `TexturePath2` VARCHAR(100) DEFAULT NULL,
-  `TexturePath3` VARCHAR(100) DEFAULT NULL,
-  `Flags` INT NOT NULL DEFAULT '0',
-  `Type` INT NOT NULL DEFAULT '0',
-  `Color` INT NOT NULL DEFAULT '0',
-  PRIMARY KEY (`ID`) USING BTREE
-) ENGINE=MYISAM DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
+-- Deprecated for acore_world: CharSections lives in acore_dbc. See data/sql/base/db_dbc/charsections_dbc.sql
+-- Kept as a no-op so old DB assembler configs do not reference a missing file.
+SELECT 1;

@@ -3,12 +3,14 @@
 UPDATE `creature_template` SET `unit_flags` = `unit_flags`|64|256|512|32768|33554432, `ScriptName` = '' WHERE `entry` IN (28961, 28965, 30980, 30982);
 
 DELETE FROM `areatrigger_scripts` WHERE `entry` IN (5082, 5083, 5084);
+
 INSERT INTO `areatrigger_scripts` (`entry`, `ScriptName`) VALUES
 (5082, 'at_hol_hall_of_watchers'),
 (5083, 'at_hol_hall_of_watchers'),
 (5084, 'at_hol_hall_of_watchers');
 
 DELETE FROM `creature_template_addon` WHERE `entry` IN (28965, 28961, 30980, 30982);
+
 INSERT INTO `creature_template_addon` (`entry`,`path_id`,`bytes1`,`mount`,`auras`) VALUES
 (28965, 0, 0, 0, '52881'), -- 28965 - 16245, 52881
 (28961, 0, 0, 0, '52898'), -- 28961 - 16245, 52898
@@ -18,6 +20,7 @@ INSERT INTO `creature_template_addon` (`entry`,`path_id`,`bytes1`,`mount`,`auras
 UPDATE `creature_template` SET `AIName` = 'SmartAI' WHERE `entry` = 28961;
 
 DELETE FROM `smart_scripts` WHERE (`source_type` = 0 AND `entryorguid` = 28961);
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (28961, 0, 0, 0, 0, 0, 100, 0, 10000, 25000, 10000, 25000, 0, 0, 11, 23600, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 'Titanium Siegebreaker - In Combat - Cast \'Piercing Howl\''),
 (28961, 0, 1, 0, 0, 0, 100, 0, 5000, 10000, 5000, 10000, 0, 0, 11, 52890, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 'Titanium Siegebreaker - In Combat - Cast \'Penetrating Strike\''),
@@ -33,6 +36,7 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 UPDATE `creature_template` SET `AIName` = 'SmartAI' WHERE `entry` = 28965;
 
 DELETE FROM `smart_scripts` WHERE (`source_type` = 0 AND `entryorguid` = 28965);
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (28965, 0, 0, 0, 0, 0, 100, 0, 10000, 25000, 10000, 25000, 0, 0, 11, 52904, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 'Titanium Thunderer - In Combat - Cast \'Throw\''),
 (28965, 0, 1, 0, 0, 0, 100, 0, 15000, 30000, 15000, 30000, 0, 0, 11, 52885, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 'Titanium Thunderer - In Combat - Cast \'Deadly Throw\''),
@@ -43,8 +47,11 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 (28965, 0, 6, 0, 7, 0, 100, 0, 0, 0, 0, 0, 0, 0, 19, 256, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 'Titanium Thunderer - On Evade - Remove Flags Immune To Players');
 
 SET @CGUID := 52885;
+
 DELETE FROM `creature` WHERE `id1` IN (28961, 28965);
+
 DELETE FROM `creature` WHERE `guid` BETWEEN @CGUID+0 AND @CGUID+30;
+
 INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `currentwaypoint`, `curhealth`, `curmana`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`) VALUES
 (@CGUID+0, 28961, 602, 4272, 4272, 3, 1, 1, 1259.378173828125, -145.273757934570312, 52.29970932006835937, 4.834561824798583984, 7200, 0, 0, 6285, 0, 0, 0, 0, 0, 63834),
 (@CGUID+1, 28961, 602, 4272, 4272, 3, 1, 1, 1264.5328369140625, -145.5595703125, 52.26771926879882812, 4.764749050140380859, 7200, 0, 0, 5802, 0, 0, 0, 0, 0, 63834),
@@ -79,16 +86,12 @@ INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `
 (@CGUID+30, 28965, 602, 4272, 4272, 3, 1, 1, 1162.243896484375, -171.8046875, 52.79578399658203125, 0, 7200, 0, 0, 6285, 0, 0, 0, 0, 0, 63834);
 
 DELETE FROM `spell_proc_event` WHERE `entry` = 52881;
+
 INSERT INTO `spell_proc_event` (`entry`, `procEx`, `Cooldown`) VALUES
 (52881, 0x00000020, 12000);
 
 UPDATE `spell_proc_event` SET `Cooldown` = 6000 WHERE `entry` = 52898;
 
-DELETE FROM `spelldifficulty_dbc` WHERE `ID` IN (52891, 52885, 52879, 52904);
-INSERT INTO `spelldifficulty_dbc` (`ID`, `DifficultySpellID_1`, `DifficultySpellID_2`, `DifficultySpellID_3`, `DifficultySpellID_4`) VALUES
-(52891, 52891, 59173, 0, 0), -- Blade Turning
-(52885, 52885, 59180, 0, 0), -- Deadly Throw
-(52879, 52879, 59181, 0, 0), -- Deflection
-(52904, 52904, 59179, 0, 0); -- Throw
+-- spelldifficulty_dbc: see data/sql/updates/db_dbc/2025_10_18_02.sql (acore_dbc)
 
 DELETE FROM `linked_respawn` WHERE `guid` IN (126835, 126837, 126838, 126839, 126840, 126841, 126843, 126844, 126846, 126847, 126849, 126850, 126851, 126852, 126853, 126854, 126855, 126856, 126857, 126860, 126862) AND `linkType` = 0;

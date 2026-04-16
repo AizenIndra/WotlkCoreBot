@@ -1,6 +1,7 @@
 -- DB update 2025_06_05_02 -> 2025_06_05_03
 -- Gundrak formations
 DELETE FROM `creature_formations` WHERE `leaderGUID` IN (127026,127009,127021,127059,127113);
+
 INSERT INTO `creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, `groupAI`, `point_1`, `point_2`) VALUES
 (127026, 127026, 0, 0, 3, 0, 0), -- Cobras
 (127026, 127027, 0, 0, 3, 0, 0),
@@ -20,36 +21,16 @@ INSERT INTO `creature_formations` (`leaderGUID`, `memberGUID`, `dist`, `angle`, 
 
 -- Lancer/Fire Weaver
 UPDATE `creature_formations` SET `groupAI`=515 WHERE `memberGUID`=127045 AND `leaderGUID`=127045;
+
 UPDATE `creature_formations` SET `groupAI`=515 WHERE `memberGUID`=127058 AND `leaderGUID`=127045;
 
 -- God hunter/Medicine MANAGE
 UPDATE `creature_formations` SET `groupAI`=515 WHERE `memberGUID`=127054 AND `leaderGUID`=127054;
-UPDATE `creature_formations` SET `groupAI`=515 WHERE `memberGUID`=127064 AND `leaderGUID`=127054;
--- Note: Packs of 4 hunter/lancer/fire weaver/lancer seem to always social aggro, source looks similar
 
--- Spelldifficulty
-DELETE FROM `spelldifficulty_dbc` WHERE `ID` IN(55700,55703,55602,55603,55659,55613,55622,55635,55636,16172,35946,55624,55599,55597,55530,55663,55348,55521);
-INSERT INTO `spelldifficulty_dbc` (`ID`, `DifficultySpellID_1`, `DifficultySpellID_2`, `DifficultySpellID_3`, `DifficultySpellID_4`) VALUES
-(55700, 55700, 59019, 0, 0),
-(55703, 55703, 59020, 0, 0),
-(55602, 55602, 59021, 0, 0),
-(55603, 55603, 59022, 0, 0),
-(55659, 55659, 58972, 0, 0),
-(55613, 55613, 58971, 0, 0),
-(55622, 55622, 58978, 0, 0),
-(55635, 55635, 58975, 0, 0),
-(55636, 55636, 58977, 0, 0),
-(16172, 16172, 58969, 0, 0),
-(35946, 35946, 59146, 0, 0),
-(55624, 55624, 58973, 0, 0),
-(55599, 55599, 58981, 0, 0),
-(55597, 55597, 58980, 0, 0),
-(55530, 55530, 58991, 0, 0),
-(55663, 55663, 58992, 0, 0),
-(55348, 55348, 58966, 0, 0),
-(55521, 55521, 58967, 0, 0);
+UPDATE `creature_formations` SET `groupAI`=515 WHERE `memberGUID`=127064 AND `leaderGUID`=127054;
 
 DELETE FROM `smart_scripts` WHERE (`source_type` = 0 AND `entryorguid` IN (29774,29768,29822,29819,29832,29820,29829,29826,29838,29836));
+
 INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `event_param5`, `event_param6`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_param4`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES
 (29774, 0, 0, 0, 0, 0, 100, 0, 1000, 5000, 7000, 11000, 0, 0, 11, 55700, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 'Spitting Cobra - In Combat - Cast \'Venom Spit\''),
 (29774, 0, 1, 0, 0, 0, 100, 0, 2900, 6600, 10000, 12000, 0, 0, 11, 55703, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 'Spitting Cobra - In Combat - Cast \'Cobra Strike\''),
