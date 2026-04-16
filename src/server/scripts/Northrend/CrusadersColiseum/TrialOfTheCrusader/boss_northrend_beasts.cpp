@@ -16,6 +16,7 @@
  */
 
 #include "CreatureScript.h"
+#include "MotionMaster.h"
 #include "Player.h"
 #include "ScriptedCreature.h"
 #include "Vehicle.h"
@@ -827,8 +828,11 @@ public:
             return false;
         }
 
-        void MovementInform(uint32  /*type*/, uint32 id) override
+        void MovementInform(uint32 type, uint32 id) override
         {
+            if (type != POINT_MOTION_TYPE && type != EFFECT_MOTION_TYPE && type != JUMP_MOTION_TYPE && type != CHARGE_MOTION_TYPE)
+                return;
+
             if (id == EVENT_CHARGE)
             {
                 events.Reset();

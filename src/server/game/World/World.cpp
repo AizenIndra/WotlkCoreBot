@@ -100,6 +100,8 @@
 #include "WorldStateDefines.h"
 #include <boost/asio/ip/address.hpp>
 #include <cmath>
+#include <cstdlib>
+#include <sstream>
 
 std::atomic_long World::_stopEvent = false;
 uint8 World::_exitCode = SHUTDOWN_EXIT_CODE;
@@ -138,7 +140,18 @@ World::~World()
     while (_cliCmdQueue.next(command))
         delete command;
 
+    _areaIdExcludes.clear();
+
     VMAP::VMapFactory::clear();
+}
+
+void World::SetAreaIdExcludes(std::string const& areaIdExcludes)
+{
+    _areaIdExcludes.clear();
+    std::stringstream excludeStream(areaIdExcludes);
+    std::string temp;
+    while (std::getline(excludeStream, temp, ','))
+        _areaIdExcludes.insert(static_cast<uint32>(atoi(temp.c_str())));
 }
 
 std::unique_ptr<IWorld>& getWorldInstance()
@@ -188,6 +201,9 @@ void World::LoadConfigSettings(bool reload)
         sWorldSessionMgr->SetPlayerAmountLimit(sConfigMgr->GetOption<int32>("PlayerLimit", 1000));
 
     _worldConfig.Initialize(reload);
+
+    SetAreaIdExcludes(std::string(getStringConfig(CONFIG_ANTICHEAT_AREA_ID_EXCLUDES)));
+    LOG_INFO("server.loading", "AntiCheat: {} area excludes loaded", _areaIdExcludes.size());
 
     for (uint8 i = 0; i < MAX_MOVE_TYPE; ++i)
         playerBaseMoveSpeed[i] = baseMoveSpeed[i] * getRate(RATE_MOVESPEED_PLAYER);

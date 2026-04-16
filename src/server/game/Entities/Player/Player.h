@@ -51,6 +51,7 @@ struct TrainerSpell;
 struct VendorItem;
 
 class AchievementMgr;
+class Anticheat;
 class ReputationMgr;
 class Channel;
 class CharacterCreateInfo;
@@ -2574,6 +2575,7 @@ public:
     void RemoveTimedAchievement(AchievementCriteriaTimedTypes type, uint32 entry);
     void CompletedAchievement(AchievementEntry const* entry);
     [[nodiscard]] AchievementMgr* GetAchievementMgr() const { return m_achievementMgr; }
+    [[nodiscard]] Anticheat* GetAnticheat() const { return m_anticheat; }
 
     void SetCreationTime(Seconds creationTime) { m_creationTime = creationTime; }
     [[nodiscard]] Seconds GetCreationTime() const { return m_creationTime; }
@@ -3035,6 +3037,7 @@ private:
 
     AchievementMgr* m_achievementMgr;
     ReputationMgr*  m_reputationMgr;
+    Anticheat* m_anticheat = nullptr;
 
     SpellCooldowns m_spellCooldowns;
 

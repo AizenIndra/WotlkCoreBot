@@ -17,6 +17,7 @@
 
 #include "AreaDefines.h"
 #include "ArenaSpectator.h"
+#include "Anticheat.h"
 #include "Battleground.h"
 #include "BattlegroundMgr.h"
 #include "CellImpl.h"
@@ -37,6 +38,8 @@
 #include "Transport.h"
 #include "Vehicle.h"
 #include "WaypointMovementGenerator.h"
+#include "World.h"
+#include "WorldConfig.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
 
@@ -552,18 +555,49 @@ bool WorldSession::VerifyMovementInfo(MovementInfo const& movementInfo, Player* 
     {
         jumpopcode = true;
         if (plrMover && !sScriptMgr->AnticheatHandleDoubleJump(plrMover, mover))
+            return false;
+    }
+
+    if (opcode == MSG_MOVE_JUMP && plrMover && sWorld->getBoolConfig(CONFIG_ANTICHEAT_MEGAJUMP_ENABLED)
+        && !sWorld->isAreaIdDisabledForAC(plrMover->GetAreaId()))
+    {
+        if (plrMover->GetAnticheat()->IsIllegalMegaJump(movementInfo))
         {
-            plrMover->GetSession()->KickPlayer();
+            plrMover->GetAnticheat()->punish(6);
+            return false;
+        }
+    }
+
+    if (plrMover && !sWorld->isAreaIdDisabledForAC(plrMover->GetAreaId()))
+    {
+        if (sWorld->getBoolConfig(CONFIG_ANTICHEAT_FAKEJUMPER_ENABLED) && !movementInfo.HasMovementFlag(MOVEMENTFLAG_ONTRANSPORT)
+            && mover->IsFalling() && movementInfo.pos.GetPositionZ() > mover->GetPositionZ())
+        {
+            if (!plrMover->GetAnticheat()->isJumpingbyOpcode() && !plrMover->GetAnticheat()->underACKmount() && !plrMover->IsFlying())
+            {
+                plrMover->GetAnticheat()->punish(3);
+                return false;
+            }
+        }
+
+        if (sWorld->getBoolConfig(CONFIG_ANTICHEAT_FAKEFLYINGMODE_ENABLED) && !movementInfo.HasMovementFlag(MOVEMENTFLAG_ONTRANSPORT)
+            && !plrMover->GetAnticheat()->isCanFlybyServer() && !plrMover->GetAnticheat()->underACKmount()
+            && movementInfo.HasMovementFlag(MOVEMENTFLAG_MASK_MOVING_FLY) && !plrMover->IsInWater())
+        {
+            plrMover->GetAnticheat()->punish(4);
+            return false;
+        }
+
+        if (plrMover->GetAnticheat()->IsIllegalWaterWalkMovement(movementInfo))
+        {
+            plrMover->GetAnticheat()->punish(5);
             return false;
         }
     }
 
     /* start some hack detection */
     if (plrMover && !sScriptMgr->AnticheatCheckMovementInfo(plrMover, movementInfo, mover, jumpopcode))
-    {
-        plrMover->GetSession()->KickPlayer();
         return false;
-    }
 
     if (movementInfo.HasMovementFlag(MOVEMENTFLAG_ONTRANSPORT))
     {
@@ -641,6 +675,10 @@ bool WorldSession::ProcessMovementInfo(MovementInfo& movementInfo, Unit* mover, 
         plrMover->SetInWater(!plrMover->IsInWater() || plrMover->GetMap()->IsUnderWater(plrMover->GetPhaseMask(), movementInfo.pos.GetPositionX(),
             movementInfo.pos.GetPositionY(), movementInfo.pos.GetPositionZ(), plrMover->GetCollisionHeight()));
     }
+
+    // Must run after a successful movement packet: updates client/server timestamps for AntiSpeedHack (see 0009-AntiCheat.patch).
+    if (plrMover)
+        sScriptMgr->AnticheatUpdateMovementInfo(plrMover, movementInfo);
 
     if (plrMover)//Hook for OnPlayerMove
     {

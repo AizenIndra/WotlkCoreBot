@@ -1712,6 +1712,10 @@ public:
     [[nodiscard]] virtual bool CanFly() const = 0;
     [[nodiscard]] bool IsFlying() const { return m_movementInfo.HasMovementFlag(MOVEMENTFLAG_FLYING | MOVEMENTFLAG_DISABLE_GRAVITY); }
     [[nodiscard]] bool IsFalling() const;
+    /// Server-driven jump spline (JumpMovementGenerator); not the same as client jump opcode.
+    [[nodiscard]] bool IsJumping() const { return m_isJumping; }
+    void SetIsJumping(bool jumping) { m_isJumping = jumping; }
+
     [[nodiscard]] bool IsRooted() const { return m_movementInfo.HasMovementFlag(MOVEMENTFLAG_ROOT); }
 
     [[nodiscard]] float GetHoverHeight() const { return IsHovering() ? GetFloatValue(UNIT_FIELD_HOVERHEIGHT) : 0.0f; }
@@ -1768,6 +1772,8 @@ public:
     void SetControlled(bool apply, UnitState state, Unit* source = nullptr, bool isFear = false);
     void DisableRotate(bool apply);
     void DisableSpline();
+    /// Sync world position with the active movespline (used right after MoveSplineInit::Launch from movement generators).
+    void UpdateSplinePosition();
 
     /*********************************************************/
     /***                  MISC METHODS                     ***/
@@ -2207,6 +2213,7 @@ protected:
     // xinef: apply resilience
     bool m_applyResilience;
     bool _instantCast;
+    bool m_isJumping;
 
 private:
     // Legacy proc handlers removed - all procs now use AuraScripts and spell_proc table
@@ -2214,7 +2221,6 @@ private:
     bool HandleAuraRaidProcFromCharge(AuraEffect* triggeredByAura);
 
     void UpdateSplineMovement(uint32 t_diff);
-    void UpdateSplinePosition();
 
     // player or player's pet
     [[nodiscard]] float GetCombatRatingReduction(CombatRating cr) const;

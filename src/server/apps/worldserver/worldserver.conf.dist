@@ -4768,6 +4768,183 @@ Respawn.DynamicMinimumGameObject = 10
 ###################################################################################################
 
 ###################################################################################################
+# CUSTOM ANTICHEAT (movement anticheat — toggles match WorldConfig.cpp AntiCheats.* keys)
+#
+# Typical WotLK client-side tools manipulate local memory (speed, fake fly, wallclimb angles, jump state).
+# Server cannot see the cheat binary; these checks only validate movement packets vs. game rules.
+#
+# Optional SQL: apply data/sql/updates/db_world/2026_04_16_03_anticheat_acore_string.sql to `acore_world` (GM broadcast strings).
+# Auth logs table: data/sql/updates/db_auth/ (anticheat_logs) if not already applied.
+#
+#    AntiCheats.FakeJumper.Enabled
+#        Description: Detect "fake jump" (Z rising while falling flag).
+#        Default:     1 - (Enabled)
+
+AntiCheats.FakeJumper.Enabled = 1
+
+#
+#    AntiCheats.FakeFlyingmode.Enabled
+#        Description: Detect fly movement without server-side CanFly.
+#        Default:     1
+
+AntiCheats.FakeFlyingmode.Enabled = 1
+
+#
+#    AntiCheats.DoubleJump.Enabled
+#        Description: Kick on double-jump detection (second MSG_MOVE_JUMP before landing).
+#        Default:     1
+
+AntiCheats.DoubleJump.Enabled = 1
+
+#
+#    AntiCheats.FlyHack.Enabled
+#        Description: Enable periodic fly-hack checks (timer below).
+#        Default:     1
+
+AntiCheats.FlyHack.Enabled = 1
+
+#
+#    AntiCheats.SpeedHack.Enabled
+#        Description: Enable speed / movement consistency checks.
+#        Default:     1
+
+AntiCheats.SpeedHack.Enabled = 1
+
+#
+#    AntiCheats.IgnoreControlMovement.Enabled
+#        Description: Detect movement while rooted without ACK.
+#        Default:     1
+
+AntiCheats.IgnoreControlMovement.Enabled = 1
+
+#
+#    AntiCheats.ClimbHack.Enabled
+#        Description: Detect steep vertical movement without flight/swim (wallclimb-style angles).
+#        Default:     1
+
+AntiCheats.ClimbHack.Enabled = 1
+
+#
+#    AntiCheats.ClimbHack.Kick.Enabled
+#        Description: Kick when ClimbHack triggers (packet is always dropped on detection).
+#        Default:     1
+
+AntiCheats.ClimbHack.Kick.Enabled = 1
+
+#
+#    AntiCheats.TeleportSegment.Enabled
+#        Description: Reject movement packets whose 3D displacement from the server's last position
+#                     exceeds MaxYards in one update.
+#        Default:     1
+
+AntiCheats.TeleportSegment.Enabled = 1
+
+#
+#    AntiCheats.TeleportSegment.Kick.Enabled
+#        Description: Kick when TeleportSegment triggers (packet is always dropped).
+#        Default:     1
+
+AntiCheats.TeleportSegment.Kick.Enabled = 1
+
+#
+#    AntiCheats.TeleportSegment.MaxYards
+#        Description: Maximum allowed 3D distance (yards) between previous position and packet position.
+#        Default:     150
+
+AntiCheats.TeleportSegment.MaxYards = 150
+
+#
+#    AntiCheats.WaterWalk.Enabled
+#        Description: Detect LIQUID_MAP_WATER_WALK at packet position without SPELL_AURA_WATER_WALK / ghost.
+#        Default:     1
+
+AntiCheats.WaterWalk.Enabled = 1
+
+#
+#    AntiCheats.WaterWalk.Kick.Enabled
+#        Description: Kick when water-walk check triggers (packet dropped).
+#        Default:     1
+
+AntiCheats.WaterWalk.Kick.Enabled = 1
+
+#
+#    AntiCheats.MegaJump.Enabled
+#        Description: Detect inflated MovementInfo.jump.zspeed on MSG_MOVE_JUMP.
+#        Default:     1
+
+AntiCheats.MegaJump.Enabled = 1
+
+#
+#    AntiCheats.MegaJump.Kick.Enabled
+#        Description: Kick when MegaJump check triggers (packet dropped).
+#        Default:     1
+
+AntiCheats.MegaJump.Kick.Enabled = 1
+
+#
+#    AntiCheats.MegaJump.BaseZSpeed
+#        Description: Reference vertical jump velocity before run-speed scaling.
+#        Default:     7.9575
+
+AntiCheats.MegaJump.BaseZSpeed = 7.9575
+
+#
+#    AntiCheats.MegaJump.ZSpeedToleranceMult
+#        Description: Extra multiplier on the allowed zspeed.
+#        Default:     1.40
+
+AntiCheats.MegaJump.ZSpeedToleranceMult = 1.40
+
+#
+#    AntiCheats.SpeedHack.Kick.Enabled
+#        Description: Kick on speed-hack detection when checks fail.
+#        Default:     1
+
+AntiCheats.SpeedHack.Kick.Enabled = 1
+
+#
+#    AntiCheats.FlyHack.Kick.Enabled
+#        Description: Kick on fly-hack timer check failure.
+#        Default:     1
+
+AntiCheats.FlyHack.Kick.Enabled = 1
+
+#
+#    AntiCheats.FakeJumper.Kick.Enabled
+#        Default:     1
+
+AntiCheats.FakeJumper.Kick.Enabled = 1
+
+#
+#    AntiCheats.FakeFlyingmode.Kick.Enabled
+#        Default:     1
+
+AntiCheats.FakeFlyingmode.Kick.Enabled = 1
+
+#
+#    AntiCheats.NoFallingDmg.Kick.Enabled
+#        Default:     1
+
+AntiCheats.NoFallingDmg.Kick.Enabled = 1
+
+#
+#    AntiCheats.FlyHackTimer
+#        Description: Milliseconds between fly-hack timer ticks (also used after model reload).
+#        Default:     3000
+
+AntiCheats.FlyHackTimer = 3000
+
+#
+#    AntiCheats.areaIdExcludes
+#        Description: Comma-separated area IDs where anticheat checks are skipped.
+#        Example:     "4859,1234"
+
+AntiCheats.areaIdExcludes = "4859"
+
+#
+###################################################################################################
+
+###################################################################################################
 #                                                                                                 #
 # GAME SETTINGS END                                                                               #
 #                                                                                                 #

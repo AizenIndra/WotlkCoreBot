@@ -32,6 +32,7 @@
 #include <list>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 
 class Object;
 class WorldPacket;
@@ -242,6 +243,9 @@ public:
     [[nodiscard]] std::string const& GetRealmName() const override { return _realmName; } // pussywizard
     void SetRealmName(std::string name) override { _realmName = name; } // pussywizard
 
+    void SetAreaIdExcludes(std::string const& areaIdExcludes);
+    [[nodiscard]] bool isAreaIdDisabledForAC(uint32 areaId) const override { return _areaIdExcludes.count(areaId) > 0; }
+
 protected:
     void _UpdateGameTime();
     // callback for UpdateRealmCharacters
@@ -291,6 +295,8 @@ private:
     static float _maxVisibleDistanceInBGArenas;
 
     std::string _realmName;
+
+    std::unordered_set<uint32> _areaIdExcludes;
 
     // CLI command holder to be thread safe
     LockedQueue<CliCommandHolder*> _cliCmdQueue;

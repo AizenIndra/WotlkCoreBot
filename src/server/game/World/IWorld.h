@@ -115,6 +115,8 @@ public:
     [[nodiscard]] virtual std::string const& GetRealmName() const = 0;
     virtual void SetRealmName(std::string name) = 0;
     virtual SQLQueryHolderCallback& AddQueryHolderCallback(SQLQueryHolderCallback&& callback) = 0;
+
+    [[nodiscard]] virtual bool isAreaIdDisabledForAC(uint32 areaId) const = 0;
 };
 
 #endif //AZEROTHCORE_IWORLD_H

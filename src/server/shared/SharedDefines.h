@@ -3563,6 +3563,7 @@ enum EventId
     /// and had a path already generated - using it in PointMovementGenerator will not
     /// create a new spline and launch it
     EVENT_CHARGE_PREPATH    = 1005,
+    EVENT_JUMP              = 1006,
 };
 
 enum ResponseCodes

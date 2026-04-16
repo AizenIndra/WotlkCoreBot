@@ -52,6 +52,9 @@ namespace AccountMgr
     bool GetName(uint32 accountId, std::string& name);
     uint32 GetCharactersCount(uint32 accountId);
 
+    /// Optional anticheat logging into auth.anticheat_logs (requires table + LOGIN_INS_ACCOUNT_ANTICHEAT).
+    void RecordAntiCheatLog(uint32 accountId, std::string const& playerName, std::string const& description, std::string const& position, uint32 realmId);
+
     bool IsPlayerAccount(uint32 gmlevel);
     bool IsGMAccount(uint32 gmlevel);
     bool IsAdminAccount(uint32 gmlevel);

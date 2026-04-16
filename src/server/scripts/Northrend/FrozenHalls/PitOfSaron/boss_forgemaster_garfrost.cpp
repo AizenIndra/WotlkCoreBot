@@ -65,7 +65,7 @@ enum Spells
 enum Events
 {
     EVENT_SPELL_THROW_SARONITE  = 1,
-    EVENT_JUMP,
+    EVENT_GARFROST_JUMP,
     EVENT_SPELL_CHILLING_WAVE,
     EVENT_SPELL_DEEP_FREEZE,
 };
@@ -130,7 +130,7 @@ public:
                 me->SendMeleeAttackStop(me->GetVictim());
                 events.DelayEvents(8s);
                 me->CastSpell(me, SPELL_THUNDERING_STOMP, false);
-                events.RescheduleEvent(EVENT_JUMP, 1250ms);
+                events.RescheduleEvent(EVENT_GARFROST_JUMP, 1250ms);
                 return;
             }
 
@@ -143,7 +143,7 @@ public:
                 me->SendMeleeAttackStop(me->GetVictim());
                 events.DelayEvents(8s);
                 me->CastSpell(me, SPELL_THUNDERING_STOMP, false);
-                events.RescheduleEvent(EVENT_JUMP, 1250ms);
+                events.RescheduleEvent(EVENT_GARFROST_JUMP, 1250ms);
                 return;
             }
         }
@@ -246,7 +246,7 @@ public:
                     }
                     events.Repeat(12s + 500ms, 20s);
                     break;
-                case EVENT_JUMP:
+                case EVENT_GARFROST_JUMP:
                     me->DisableRotate(true);
                     if (phase == 1)
                         me->GetMotionMaster()->MoveJump(northForgePos.GetPositionX(), northForgePos.GetPositionY(), northForgePos.GetPositionZ(), 25.0f, 15.0f, 0);

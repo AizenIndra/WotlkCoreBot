@@ -48,6 +48,8 @@
 #include "SkillExtraItems.h"
 #include "SocialMgr.h"
 #include "Spell.h"
+#include "Anticheat.h"
+#include <algorithm>
 #include "SpellAuraEffects.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
@@ -4893,7 +4895,7 @@ void Spell::EffectCharge(SpellEffIndex /*effIndex*/)
         if (player)
         {
             // charge changes fall time
-            player->SetFallInformation(GameTime::GetGameTime().count(), m_caster->GetPositionZ());
+            player->GetAnticheat()->resetFallingData(m_caster->GetPositionZ());
 
             if (!m_spellInfo->HasAttribute(SPELL_ATTR0_CANCELS_AUTO_ATTACK_COMBAT) && !m_spellInfo->IsPositive() && m_caster->GetTarget() == unitTarget->GetGUID())
             {
@@ -4905,8 +4907,14 @@ void Spell::EffectCharge(SpellEffIndex /*effIndex*/)
         // Spell is not using explicit target - no generated path
         if (!m_preGeneratedPath)
         {
-            Position pos = unitTarget->GetFirstCollisionPosition(unitTarget->GetCombatReach(), unitTarget->GetRelativeAngle(m_caster));
-            m_caster->GetMotionMaster()->MoveCharge(pos.m_positionX, pos.m_positionY, pos.m_positionZ, speed, EVENT_CHARGE, nullptr, false, 0.0f, targetGUID);
+            Position pos;
+            float targetObjectSizeForZOffset = std::min(unitTarget->GetCombatReach(), 4.0f);
+
+            if (m_caster->HasUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT) || unitTarget->HasUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT))
+                pos = unitTarget->GetPosition();
+            else
+                pos = unitTarget->GetFirstCollisionPosition(unitTarget->GetCombatReach(), unitTarget->GetRelativeAngle(m_caster));
+            m_caster->GetMotionMaster()->MoveCharge(pos.m_positionX, pos.m_positionY, pos.m_positionZ + targetObjectSizeForZOffset, speed, EVENT_CHARGE, nullptr, false, 0.0f, targetGUID);
         }
         else
         {
@@ -5039,7 +5047,7 @@ void Spell::EffectLeapBack(SpellEffIndex effIndex)
 
     // xinef: changes fall time
     if (m_caster->IsPlayer())
-        m_caster->ToPlayer()->SetFallInformation(GameTime::GetGameTime().count(), m_caster->GetPositionZ());
+        m_caster->ToPlayer()->GetAnticheat()->resetFallingData(m_caster->GetPositionZ());
 }
 
 void Spell::EffectQuestClear(SpellEffIndex effIndex)

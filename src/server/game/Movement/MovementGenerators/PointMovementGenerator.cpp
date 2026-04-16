@@ -111,6 +111,9 @@ bool PointMovementGenerator<T>::DoUpdate(T* unit, uint32 /*diff*/)
     if (!unit)
         return false;
 
+    if (unit->IsJumping())
+        return true;
+
     if (unit->IsMovementPreventedByCasting())
     {
         unit->StopMoving();

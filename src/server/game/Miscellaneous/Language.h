@@ -1449,6 +1449,20 @@ enum AcoreStrings
 
     // Achievement commands
     LANG_ACHIEVEMENT_ADD_ONLINE                    = 30126,
-    LANG_ACHIEVEMENT_ADD_OFFLINE                   = 30127
+    LANG_ACHIEVEMENT_ADD_OFFLINE                   = 30127,
+
+    // Movement anticheat (GM broadcast; see data/sql updates for acore_string)
+    LANG_GM_ANNOUNCE_ASH                           = 30128,
+    LANG_GM_ANNOUNCE_AFH_CANFLYWRONG               = 30129,
+    LANG_GM_ANNOUNCE_AFK_SWIMMING                  = 30130,
+    LANG_GM_ANNOUNCE_AFH                           = 30131,
+    LANG_GM_ANNOUNCE_DOUBLE_JUMP                   = 30132,
+    LANG_GM_ANNOUNCE_JUMPER_FAKE                   = 30133,
+    LANG_GM_ANNOUNCE_JUMPER_FLYING                 = 30134,
+    LANG_GM_ANNOUNCE_WALLCLIMB                     = 30135,
+    LANG_GM_ANNOUNCE_MOVE_UNDER_CONTROL            = 30136,
+    LANG_GM_ANNOUNCE_NOFALLINGDMG                  = 30137,
+    LANG_GM_ANNOUNCE_WATERWALK                     = 30138,
+    LANG_GM_ANNOUNCE_MEGAJUMP                      = 30139
 };
 #endif

@@ -26,6 +26,7 @@
 #include "ObjectMgr.h"
 #include "ScriptedCreature.h"
 #include "SpellMgr.h"
+#include "MotionMaster.h"
 
 bool SmartAIMgr::IsSAIBoolValid(SmartScriptHolder const& e, SAIBool value)
 {
@@ -1224,7 +1225,7 @@ bool SmartAIMgr::IsEventValid(SmartScriptHolder& e)
                 }
             case SMART_EVENT_MOVEMENTINFORM:
                 {
-                    if (e.event.movementInform.type > NULL_MOTION_TYPE)
+                    if (e.event.movementInform.type >= MAX_MOTION_TYPE)
                     {
                         LOG_ERROR("sql.sql", "SmartAIMgr: Entry {} SourceType {} Event {} Action {} uses invalid Motion type {}, skipped.", e.entryOrGuid, e.GetScriptType(), e.event_id, e.GetActionType(), e.event.movementInform.type);
                         return false;

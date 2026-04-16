@@ -51,6 +51,7 @@
 #include "Vehicle.h"
 #include "World.h"
 #include "WorldPacket.h"
+#include <algorithm>
 #include <cmath>
 
 /// @todo: this import is not necessary for compilation and marked as unused by the IDE
@@ -3512,6 +3513,16 @@ SpellCastResult Spell::prepare(SpellCastTargets const* targets, AuraEffect const
         if (m_caster->ToPlayer()->GetCommandStatus(CHEAT_CASTTIME))
             m_casttime = 0;
 
+    if (Unit* unitCaster = m_caster->ToUnit())
+    {
+        if (unitCaster->IsJumping() && m_casttime != 0)
+        {
+            SendCastResult(SPELL_FAILED_SPELL_IN_PROGRESS);
+            finish(false);
+            return SPELL_FAILED_SPELL_IN_PROGRESS;
+        }
+    }
+
     // don't allow channeled spells / spells with cast time to be casted while moving
     // (even if they are interrupted on moving, spells with almost immediate effect get to have their effect processed before movement interrupter kicks in)
     if ((m_spellInfo->IsChanneled() || m_casttime) && m_caster->IsPlayer() && m_caster->isMoving() && m_spellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_MOVEMENT && !IsTriggered())
@@ -6206,19 +6217,40 @@ SpellCastResult Spell::CheckCast(bool strict, uint32* /*param1*/, uint32* /*para
                         float objSize = target->GetCombatReach();
                         float range = m_spellInfo->GetMaxRange(true, m_caster, this) * 1.5f + objSize; // can't be overly strict
 
-                        m_preGeneratedPath = std::make_unique<PathGenerator>(m_caster);
-                        m_preGeneratedPath->SetPathLengthLimit(range);
+                        Unit* unitCaster = m_caster->ToUnit();
+                        if (!unitCaster)
+                            return SPELL_FAILED_DONT_REPORT;
 
-                        // first try with raycast, if it fails fall back to normal path
-                        bool result = m_preGeneratedPath->CalculatePath(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), false);
-                        if (m_preGeneratedPath->GetPathType() & PATHFIND_SHORT)
-                            return SPELL_FAILED_NOPATH;
-                        else if (!result || m_preGeneratedPath->GetPathType() & (PATHFIND_NOPATH | PATHFIND_INCOMPLETE))
-                            return SPELL_FAILED_NOPATH;
-                        else if (m_preGeneratedPath->IsInvalidDestinationZ(target)) // Check position z, if not in a straight line
+                        if (!unitCaster->IsInRange(target, 0.f, range))
                             return SPELL_FAILED_NOPATH;
 
-                        m_preGeneratedPath->ShortenPathUntilDist(G3D::Vector3(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ()), objSize); // move back
+                        if (!unitCaster->HasUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT) || !target->HasUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT))
+                        {
+                            m_preGeneratedPath = std::make_unique<PathGenerator>(unitCaster);
+                            m_preGeneratedPath->SetPathLengthLimit(range * 2.0f);
+
+                            float targetObjectSizeForZOffset = 0.0f;
+                            if (!target->IsUnderWater() && !target->IsFlying())
+                                targetObjectSizeForZOffset = std::min(target->GetCombatReach(), 4.0f);
+
+                            bool result = m_preGeneratedPath->CalculatePath(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ() + targetObjectSizeForZOffset, false);
+                            if (m_preGeneratedPath->GetPathType() & PATHFIND_SHORT)
+                                return SPELL_FAILED_OUT_OF_RANGE;
+                            else if (!result || m_preGeneratedPath->GetPathType() & (PATHFIND_NOPATH | PATHFIND_INCOMPLETE))
+                            {
+                                float x, y, z;
+                                target->GetClosePoint(x, y, z, targetObjectSizeForZOffset);
+                                target->GetMap()->GetMapCollisionData().GetDynamicTree().GetObjectHitPos(target->GetPhaseMask(), target->GetPositionX(), target->GetPositionY(), target->GetPositionZ() + targetObjectSizeForZOffset, x, y, z + targetObjectSizeForZOffset, x, y, z, -targetObjectSizeForZOffset);
+                                result = m_preGeneratedPath->CalculatePath(x, y, z + targetObjectSizeForZOffset, false);
+
+                                if (!result || m_preGeneratedPath->GetPathType() & (PATHFIND_NOPATH | PATHFIND_INCOMPLETE))
+                                    return SPELL_FAILED_NOPATH;
+                            }
+                            else if (m_preGeneratedPath->IsInvalidDestinationZ(target))
+                                return SPELL_FAILED_NOPATH;
+
+                            m_preGeneratedPath->ShortenPathUntilDist(G3D::Vector3(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ()), objSize);
+                        }
                     }
                     if (Player* player = m_caster->ToPlayer())
                         player->SetCanTeleport(true);

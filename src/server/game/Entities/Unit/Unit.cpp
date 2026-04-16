@@ -442,6 +442,7 @@ Unit::Unit() : WorldObject(),
 
     m_applyResilience = false;
     _instantCast = false;
+    m_isJumping = false;
 
     _lastLiquid = nullptr;
 

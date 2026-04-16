@@ -46,6 +46,7 @@
 //  there is probably some underlying problem with imports which should properly addressed
 //  see: https://github.com/azerothcore/azerothcore-wotlk/issues/9766
 #include "GridNotifiersImpl.h"
+#include "Anticheat.h"
 
 // Zone Interval should be 1 second
 constexpr auto ZONE_UPDATE_INTERVAL = 1000;
@@ -56,6 +57,8 @@ void Player::Update(uint32 p_time)
         return;
 
     sScriptMgr->OnPlayerBeforeUpdate(this, p_time);
+
+    GetAnticheat()->update(p_time);
 
     // undelivered mail
     if (m_nextMailDelivereTime && m_nextMailDelivereTime <= GameTime::GetGameTime().count())
