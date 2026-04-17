@@ -130,6 +130,7 @@ World::World()
     _mail_expire_check_timer = 0s;
     _isClosed = false;
     _cleaningFlags = 0;
+    m_shopUpdate = 0;
     _dbClientCacheVersion = 0;
 }
 
@@ -158,6 +159,15 @@ std::unique_ptr<IWorld>& getWorldInstance()
 {
     static std::unique_ptr<IWorld> instance = std::make_unique<World>();
     return instance;
+}
+
+PlayerDonate IWorld::FindShopCurrency(uint32 AccountID) {
+    PlayerDonate data;
+    data.balance = 0;
+    data.vote = 0;
+
+    PlayerDonateMap::const_iterator itr = player_donate.find(AccountID);
+    return itr != player_donate.end() ? itr->second : data;
 }
 
 bool World::IsClosed() const
@@ -311,6 +321,8 @@ void World::LoadConfigSettings(bool reload)
 
     // call ScriptMgr if we're reloading the configuration
     sScriptMgr->OnAfterConfigLoad(reload);
+
+    LoadShop();
 }
 
 /// Initialize the World
@@ -1116,6 +1128,17 @@ void World::Update(uint32 diff)
 
     // Record update if recording set in log and diff is greater then minimum set in log
     sWorldUpdateTime.RecordUpdateTime(GameTime::GetGameTimeMS(), diff, sWorldSessionMgr->GetActiveSessionCount());
+ 
+    if (getIntConfig(CONFIG_SHOP_INTERVAL_UPDATE))
+    {
+        m_shopUpdate += diff;
+        //sLog->outError("m_shopUpdate == %d", m_shopUpdate);
+        if (m_shopUpdate > getIntConfig(CONFIG_SHOP_INTERVAL_UPDATE))
+        {
+            LoadDonateCurrency();
+            m_shopUpdate = 0;
+        }
+    }
 
     DynamicVisibilityMgr::Update(sWorldSessionMgr->GetActiveSessionCount());
 
@@ -1859,4 +1882,134 @@ CliCommandHolder::CliCommandHolder(void* callbackArg, char const* command, Print
 CliCommandHolder::~CliCommandHolder()
 {
     free(m_command);
+}
+
+void IWorld::LoadDonateCurrency()
+{
+    if (auto result = LoginDatabase.Query("SELECT id, bonuses, votes from account_donate"))
+    {
+        player_donate.clear();
+
+        PlayerDonate data;
+        uint32 AccountID = 0;
+        do
+        {
+            auto fields = result->Fetch();
+            AccountID = fields[0].Get<uint32>();
+            data.balance = fields[1].Get<uint32>();
+            data.vote = fields[2].Get<uint32>();
+
+            player_donate.insert(std::pair<uint32, PlayerDonate>(AccountID, data));
+
+        } while (result->NextRow());
+    }
+}
+
+void IWorld::LoadShop()
+{
+    LoadDonateCurrency();
+
+    uint32 store_version = 0;
+
+    if (auto ver = LoginDatabase.Query("SELECT * from custom_store_shop_version"))
+    {
+        auto ve_field = ver->Fetch();
+        m_version = ve_field[0].Get<uint64>();
+
+        if (auto result = LoginDatabase.Query("SELECT * from custom_store_item_data"))
+        {
+            std::map<int32, StoreItemData> itemMap;
+            StoreItemData data;
+            uint32 store_storeId = 0;
+            do
+            {
+                auto fields = result->Fetch();
+                store_storeId = fields[0].Get<uint64>();
+                data.itemEntry = fields[1].Get<uint64>();
+                data.count = fields[2].Get<uint64>();
+                data.price = fields[3].Get<uint64>();
+                data.discount = fields[4].Get<uint64>();
+                data.discountPrice = fields[5].Get<uint64>();
+                data.creatureEntry = fields[6].Get<uint64>();
+                data.storeFlags = fields[7].Get<uint64>();
+                data.CategoryID = fields[8].Get<uint64>();
+                data.SubCategoryID = fields[9].Get<uint64>();
+                data.MoneyID = fields[10].Get<uint64>();
+                itemMap.insert(std::pair<int32, StoreItemData>(store_storeId, data));
+
+            } while (result->NextRow());
+
+            auto store_res = LoginDatabase.Query("SELECT count(*) from custom_store_item_data");
+            auto store_fields = store_res->Fetch();
+            shop_count = store_fields[0].Get<uint64>();
+
+            itemdata_map = itemMap;
+        }
+
+        if (auto result = LoginDatabase.Query("SELECT * from custom_store_special_offer"))
+        {
+            std::map<int32, StoreSpecialOfferData> offerMap;
+            StoreSpecialOfferData data;
+            uint32 store_offerID = 0;
+            do
+            {
+                auto fields = result->Fetch();
+                store_offerID = fields[0].Get<uint64>();
+                data.background = fields[1].Get<std::string>();
+                data.headline = fields[2].Get<std::string>();
+                data.title = fields[3].Get<std::string>();
+                data.description = fields[4].Get<std::string>();
+                data.detailsTitle = fields[5].Get<std::string>();
+                data.details = fields[6].Get<uint64>();
+                data.time = fields[7].Get<uint64>();
+                data.productID = fields[8].Get<uint64>();
+                data.itemEntry = fields[9].Get<uint64>();
+                data.price = fields[10].Get<uint64>();
+                offerMap.insert(std::pair<int32, StoreSpecialOfferData>(store_offerID, data));
+
+            } while (result->NextRow());
+
+            specialoffer_map = offerMap;
+        }
+
+        if (auto result = LoginDatabase.Query("SELECT * from custom_store_special_offer_details"))
+        {
+            std::multimap<int32, StoreSpecialOfferDetailsData> detailMap;
+            StoreSpecialOfferDetailsData data;
+            uint32 detailsID = 0;
+            do
+            {
+                auto fields = result->Fetch();
+                detailsID = fields[0].Get<uint64>();
+                data.itemID = fields[1].Get<uint64>();
+                data.role = fields[2].Get<uint64>();
+                data.count = fields[3].Get<uint64>();
+                detailMap.insert(std::pair<int32, StoreSpecialOfferDetailsData>(detailsID, data));
+
+            } while (result->NextRow());
+
+            specialofferdetails_map = detailMap;
+        }
+
+        if (auto result = LoginDatabase.Query("SELECT * from custom_store_mounts"))
+        {
+            std::map<int32, CollectionMountData> mountMap;
+            CollectionMountData data;
+            uint32 mount_Id = 0;
+            do
+            {
+                auto fields = result->Fetch();
+                mount_Id = fields[0].Get<uint64>();
+                data.hash = fields[1].Get<std::string>();
+                data.currency = fields[2].Get<uint64>();
+                data.price = fields[3].Get<uint64>();
+                data.productID = fields[4].Get<uint64>();
+
+                mountMap.insert(std::pair<int32, CollectionMountData>(mount_Id, data));
+
+            } while (result->NextRow());
+
+            collection_map = mountMap;
+        }
+    }
 }

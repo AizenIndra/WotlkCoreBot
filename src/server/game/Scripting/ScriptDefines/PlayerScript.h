@@ -208,6 +208,8 @@ enum PlayerHook
     PLAYERHOOK_CAN_SEND_ERROR_ALREADY_LOOTED,
     PLAYERHOOK_ON_AFTER_CREATURE_LOOT,
     PLAYERHOOK_ON_AFTER_CREATURE_LOOT_MONEY,
+    PLAYERHOOK_ON_PLAYER_EQUIP_ITEM,
+    PLAYERHOOK_ON_PLAYER_UNEQUIP_ITEM,
     PLAYERHOOK_ON_CAN_UPDATE_SKILL,
     PLAYERHOOK_ON_BEFORE_UPDATE_SKILL,
     PLAYERHOOK_ON_UPDATE_SKILL,
@@ -243,6 +245,12 @@ public:
 
     // Called when a player completes a quest
     virtual void OnPlayerCompleteQuest(Player* /*player*/, Quest const* /*quest_id*/) { }
+
+    // Called when a player equip item
+    virtual void OnPlayerEquipItem(Player* /*player*/, uint32 /*itemEntry*/) { }
+
+    // Called when a player unequip item
+    virtual void OnPlayerUnEquipItem(Player* /*player*/, uint32 /*itemEntry*/) { }
 
     // Called when a player kills another player
     virtual void OnPlayerPVPKill(Player* /*killer*/, Player* /*killed*/) { }

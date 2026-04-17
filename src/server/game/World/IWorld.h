@@ -25,6 +25,8 @@
 #include "QueryHolder.h"
 #include "SharedDefines.h"
 #include "WorldConfig.h"
+#include <map>
+#include <string>
 #include <unordered_map>
 
 class WorldPacket;
@@ -59,6 +61,58 @@ enum ServerMessageType
     SERVER_MSG_SHUTDOWN_CANCELLED = 4,
     SERVER_MSG_RESTART_CANCELLED  = 5
 };
+ 
+struct PlayerDonate
+{
+    uint32 balance;
+    uint32 vote;
+};
+
+struct StoreItemData
+{
+    uint32 itemEntry;
+    uint32 count;
+    uint32 price;
+    uint8 discount;
+    uint32 discountPrice;
+    uint32 creatureEntry;
+    uint32 storeFlags;
+    uint8 CategoryID;
+    uint8 SubCategoryID;
+    uint8 MoneyID;
+};
+
+struct StoreSpecialOfferData
+{
+    std::string background;
+    std::string headline;
+    std::string title;
+    std::string description;
+    std::string detailsTitle;
+    uint32 details;
+    uint32 time;
+    uint32 productID;
+    uint32 itemEntry;
+    uint32 price;
+};
+
+struct StoreSpecialOfferDetailsData
+{
+    uint32 itemID;
+    uint32 role;
+    uint32 count;
+};
+
+struct CollectionMountData
+{
+    uint32 id;
+    std::string hash;
+    uint8 currency;
+    uint32 price;
+    uint32 productID;
+};
+
+typedef std::map<uint32, PlayerDonate> PlayerDonateMap;
 
 class IWorld
 {
@@ -117,6 +171,30 @@ public:
     virtual SQLQueryHolderCallback& AddQueryHolderCallback(SQLQueryHolderCallback&& callback) = 0;
 
     [[nodiscard]] virtual bool isAreaIdDisabledForAC(uint32 areaId) const = 0;
+
+    void LoadShop();
+    void LoadDonateCurrency();
+    PlayerDonate FindShopCurrency(uint32 AccountID);
+    uint32 GetStoreItems() { return shop_count; }
+    std::map<int32, StoreItemData> GetStoreItem() { return itemdata_map; }
+    std::map<int32, StoreSpecialOfferData> GetStoreSpecialOffer() { return specialoffer_map; }
+    std::multimap<int32, StoreSpecialOfferDetailsData> GetStoreSpecialDetails()
+    {
+        return specialofferdetails_map;
+    }
+    std::map<int32, CollectionMountData> GetStorCollection() { return collection_map; }
+    uint32 GetShopVersion() { return m_version; }
+    uint32 m_shopUpdate;
+
+    uint32 m_version = 0;
+    uint32 shop_count = 0;
+
+    std::map<int32, StoreItemData> itemdata_map;
+    std::map<int32, StoreSpecialOfferData> specialoffer_map;
+    std::multimap<int32, StoreSpecialOfferDetailsData> specialofferdetails_map;
+    std::map<int32, CollectionMountData> collection_map;
+
+    PlayerDonateMap player_donate;
 };
 
 #endif //AZEROTHCORE_IWORLD_H

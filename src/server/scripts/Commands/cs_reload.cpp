@@ -170,6 +170,7 @@ public:
             { "waypoint_data",                 HandleReloadWpCommand,                         SEC_ADMINISTRATOR, Console::Yes },
             { "vehicle_accessory",             HandleReloadVehicleAccessoryCommand,           SEC_ADMINISTRATOR, Console::Yes },
             { "vehicle_template_accessory",    HandleReloadVehicleTemplateAccessoryCommand,   SEC_ADMINISTRATOR, Console::Yes },
+            { "shop",                          HandleReloadShop,                              SEC_ADMINISTRATOR, Console::Yes },
         };
         static ChatCommandTable commandTable =
         {
@@ -182,6 +183,14 @@ public:
     static bool HandleReloadGMTicketsCommand(ChatHandler* /*handler*/)
     {
         sTicketMgr->LoadTickets();
+        return true;
+    }
+
+    static bool HandleReloadShop(ChatHandler* handler, const char* /*args*/)
+    {
+        LOG_INFO("server.loading","Reloading donate shop...");
+        sWorld->LoadShop();
+        handler->SendGlobalGMSysMessage("All shop tables reloaded.");
         return true;
     }
 

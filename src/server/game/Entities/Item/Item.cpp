@@ -1301,3 +1301,79 @@ std::string Item::GetDebugInfo() const
         << " BagSlot: " << std::to_string(GetBagSlot()) << " Slot: " << std::to_string(GetSlot()) << " Equipped: " << IsEquipped();
     return sstr.str();
 }
+
+bool Item::IsAllowableToEquipFor(Player* player) const
+{
+    /*if (player->CanUseItem(this) != EQUIP_ERR_OK)
+        return false;
+    if (Class == ITEM_CLASS_WEAPON)
+    {
+        uint32 skill = GetSkill();
+        if (player->GetSkillValue(skill) == 0)
+            return false;
+    }
+    else if (Class == ITEM_CLASS_ARMOR)
+    {
+        if ((Flags2 & ITEM_FLAG2_FACTION_HORDE && player->GetTeamId() == TEAM_ALLIANCE) || (Flags2 == ITEM_FLAG2_FACTION_ALLIANCE && player->GetTeamId() == TEAM_HORDE))
+            return false;
+        if (uint32 skill = GetSkill())
+        {
+            bool allowEquip = false;
+            // Armor that is binded to account can "morph" from plate to mail, etc. if skill is not learned yet.
+            if (Quality == ITEM_QUALITY_HEIRLOOM && !player->HasSkill(skill))
+            {
+                switch (player->GetClass())
+                {
+                    case CLASS_HUNTER:
+                    case CLASS_SHAMAN:
+                        allowEquip = (skill == SKILL_MAIL);
+                        break;
+                    case CLASS_PALADIN:
+                    case CLASS_WARRIOR:
+                        allowEquip = (skill == SKILL_PLATE_MAIL);
+                        break;
+                }
+            }
+            if (!allowEquip && player->GetSkillValue(skill) == 0)
+                return false;
+        }
+    }
+    if (InventoryType == INVTYPE_RELIC)
+    {
+        bool allowEquip = false;
+        switch (player->GetClass())
+        {
+            case CLASS_DRUID:
+                allowEquip = SubClass == ITEM_SUBCLASS_ARMOR_IDOL;
+                break;
+           case CLASS_SHAMAN:
+                allowEquip = SubClass == ITEM_SUBCLASS_ARMOR_TOTEM;
+                break;
+            case CLASS_PALADIN:
+                allowEquip = SubClass == ITEM_SUBCLASS_ARMOR_LIBRAM;
+                break;
+            case CLASS_DEATH_KNIGHT:
+                allowEquip = SubClass == ITEM_SUBCLASS_ARMOR_SIGIL;
+                break;
+        }
+        if (!allowEquip)
+            return false;
+    }
+    if (InventoryType == INVTYPE_RANGED)
+    {
+        bool allowEquip = true;
+        switch (player->GetClass())
+        {
+            case CLASS_DRUID:
+            case CLASS_SHAMAN:
+            case CLASS_PALADIN:
+            case CLASS_DEATH_KNIGHT:
+                allowEquip = false;
+                break;
+        }
+        if (!allowEquip)
+            return false;
+    }*/
+
+    return false;
+}

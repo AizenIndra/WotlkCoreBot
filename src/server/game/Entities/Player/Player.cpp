@@ -414,6 +414,8 @@ Player::Player(WorldSession* session): Unit(), m_mover(this), _cinematicMgr(*thi
 
     m_applyResilience = true;
 
+    m_averageItemLevel = 0;
+
     m_isInstantFlightOn = true;
 
     _wasOutdoor = true;
@@ -16389,4 +16391,97 @@ std::string Player::GetDebugInfo() const
 void Player::SendSystemMessage(std::string_view msg, bool escapeCharacters)
 {
     ChatHandler(GetSession()).SendSysMessage(msg, escapeCharacters);
+}
+
+void Player::SendAddonMessage(const char* message) const
+{
+    WorldPacket data(SMSG_MESSAGECHAT, 100);
+	uint32 messageLength = (uint32)strlen(message) + 1;
+	data << (uint8)CHAT_MSG_SYSTEM;
+	data << LANG_ADDON;
+	data << GetGUID();
+	data << uint32(0);
+	data << GetGUID();
+	data << messageLength;
+	data << message;
+	data << uint8(0);
+	GetSession()->SendPacket(&data);
+}
+
+bool Player::PlayerAlreadyHasTwoProfessions(const Player* player) const
+{
+    uint32 skillCount = 0;
+    if (player->HasSkill(SKILL_MINING))
+        skillCount++;
+    if (player->HasSkill(SKILL_SKINNING))
+        skillCount++;
+    if (player->HasSkill(SKILL_HERBALISM))
+        skillCount++;
+    if (skillCount >= 2)
+        return true;
+    for (uint32 i = 1; i < sSkillLineStore.GetNumRows(); ++i)
+    {
+        SkillLineEntry const* SkillInfo = sSkillLineStore.LookupEntry(i);
+        if (!SkillInfo)
+            continue;
+        if (SkillInfo->categoryId == SKILL_CATEGORY_SECONDARY)
+            continue;
+        if ((SkillInfo->categoryId != SKILL_CATEGORY_PROFESSION) || !SkillInfo->canLink)
+            continue;
+        const uint32 skillID = SkillInfo->id;
+        if (player->HasSkill(skillID))
+            skillCount++;
+        if (skillCount >= 2)
+            return true;
+    }
+    return false;
+}
+bool Player::IsSecondarySkill(SkillType skill) const
+{
+    return skill == SKILL_COOKING || skill == SKILL_FIRST_AID || skill == SKILL_FISHING;
+}
+void Player::LearnSkillRecipesHelper(Player* player, uint32 skill_id)
+{
+    uint32 classmask = player->getClassMask();
+    for (uint32 j = 0; j < sSkillLineAbilityStore.GetNumRows(); ++j)
+    {
+        SkillLineAbilityEntry const* skillLine = sSkillLineAbilityStore.LookupEntry(j);
+        if (!skillLine)
+            continue;
+        // wrong skill
+        if (skillLine->SkillLine != skill_id)
+            continue;
+        // not high rank
+        if (skillLine->SupercededBySpell)
+            continue;
+        // skip racial skills
+        if (skillLine->RaceMask != 0)
+            continue;
+        // skip wrong class skills
+        if (skillLine->ClassMask && (skillLine->ClassMask & classmask) == 0)
+            continue;
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(skillLine->Spell);
+        if (!spellInfo || !SpellMgr::IsSpellValid(spellInfo))
+            continue;
+        if (spellInfo->Effects[EFFECT_0].Effect == SPELL_EFFECT_CREATE_ITEM || spellInfo->Effects[EFFECT_0].Effect == SPELL_EFFECT_CREATE_ITEM_2)
+            if (uint32 item = spellInfo->Effects[EFFECT_0].ItemType)
+                continue;
+        if (spellInfo->Effects[EFFECT_0].Effect == SPELL_EFFECT_ENCHANT_ITEM)
+            continue;
+        player->learnSpell(skillLine->Spell);
+    }
+}
+bool Player::LearnAllRecipesInProfession(Player* player, SkillType skill)
+{
+    ChatHandler handler(player->GetSession());
+    //char* skill_name;
+    SkillLineEntry const* SkillInfo = sSkillLineStore.LookupEntry(skill);
+    //skill_name = SkillInfo->name[handler.GetSessionDbcLocale()];
+    if (!SkillInfo)
+        return false;
+    LearnSkillRecipesHelper(player, SkillInfo->id);
+    uint16 maxLevel = player->GetPureMaxSkillValue(SkillInfo->id);
+    player->SetSkill(SkillInfo->id, player->GetSkillStep(SkillInfo->id), maxLevel, maxLevel);
+    //handler.PSendSysMessage(LANG_COMMAND_LEARN_ALL_RECIPES, skill_name);
+    return true;
 }

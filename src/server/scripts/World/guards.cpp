@@ -161,8 +161,33 @@ public:
     }
 };
 
+class itemlevel_stack : public PlayerScript
+{
+public:
+    itemlevel_stack() : PlayerScript("itemlevel_stack") {}
+    
+    void OnPlayerEquipItem(Player* player, uint32 /*itemEntry*/) override
+    {
+        player->CalculateAverageItemLevel();
+    }
+
+    void OnPlayerUnEquipItem(Player* player, uint32 /*itemEntry*/) override
+    {
+        player->CalculateAverageItemLevel();
+    }
+    
+    void OnPlayerLogin(Player* player) override
+    {
+        if (!player)
+            return;
+        
+        player->CalculateAverageItemLevel();
+    }
+};
+
 void AddSC_guards()
 {
     new guard_shattrath_aldor();
     new guard_shattrath_scryer();
+    new itemlevel_stack();
 }

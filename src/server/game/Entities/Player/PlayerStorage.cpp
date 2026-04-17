@@ -2924,6 +2924,7 @@ Item* Player::EquipItem(uint16 pos, Item* pItem, bool update)
     UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EQUIP_EPIC_ITEM, pItem->GetEntry(), slot);
 
     sScriptMgr->OnPlayerEquip(this, pItem, bag, slot, update);
+    sScriptMgr->OnPlayerEquipItem(this, pItem->GetEntry());
     UpdateForQuestWorldObjects();
     return pItem;
 }
@@ -2948,11 +2949,19 @@ void Player::QuickEquipItem(uint16 pos, Item* pItem)
         UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EQUIP_EPIC_ITEM, pItem->GetEntry(), slot);
 
         sScriptMgr->OnPlayerEquip(this, pItem, (pos >> 8), slot, true);
+        sScriptMgr->OnPlayerEquipItem(this, pItem->GetEntry());
     }
 }
 
 void Player::SetVisibleItemSlot(uint8 slot, Item* pItem)
 {
+    ///if (pItem)
+    ///{
+    ///    SetUInt32Value(PLAYER_VISIBLE_ITEM_1_ENTRYID + (slot * 2), pItem->GetEntry());
+    ///    SetUInt16Value(PLAYER_VISIBLE_ITEM_1_ENCHANTMENT + (slot * 2), 0, pItem->GetEnchantmentId(PERM_ENCHANTMENT_SLOT));
+    ///    SetUInt16Value(PLAYER_VISIBLE_ITEM_1_ENCHANTMENT + (slot * 2), 1, pItem->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT));
+    ///}
+
     if (pItem)
     {
         SetUInt32Value(PLAYER_VISIBLE_ITEM_1_ENTRYID + (slot * 2), pItem->GetEntry());
@@ -3050,6 +3059,8 @@ void Player::RemoveItem(uint8 bag, uint8 slot, bool update)
             }
 
             SetGuidValue(PLAYER_FIELD_INV_SLOT_HEAD + (slot * 2), ObjectGuid::Empty);
+
+            sScriptMgr->OnPlayerUnEquipItem(this, pItem->GetEntry());
 
             if (slot < EQUIPMENT_SLOT_END)
                 SetVisibleItemSlot(slot, nullptr);
@@ -7890,4 +7901,58 @@ void Player::outDebugValues() const
     LOG_DEBUG("entities.player", "MIN_OFFHAND_DAMAGE is: \t{}\tMAX_OFFHAND_DAMAGE is: \t{}", GetFloatValue(UNIT_FIELD_MINOFFHANDDAMAGE), GetFloatValue(UNIT_FIELD_MAXOFFHANDDAMAGE));
     LOG_DEBUG("entities.player", "MIN_RANGED_DAMAGE is: \t{}\tMAX_RANGED_DAMAGE is: \t{}", GetFloatValue(UNIT_FIELD_MINRANGEDDAMAGE), GetFloatValue(UNIT_FIELD_MAXRANGEDDAMAGE));
     LOG_DEBUG("entities.player", "ATTACK_TIME is: \t{}\t\tRANGE_ATTACK_TIME is: \t{}", GetAttackTime(BASE_ATTACK), GetAttackTime(RANGED_ATTACK));
+}
+
+void Player::CalculateAverageItemLevel()
+{
+    float sum = 0;
+    uint32 count = 0;
+
+    float weaponSum = 0;
+    uint32 weaponCount = 0;
+    uint32 ilvl = 0;
+
+    for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
+    {
+        // don't check tabard and shirt
+        if (i == EQUIPMENT_SLOT_TABARD || i == EQUIPMENT_SLOT_BODY)
+            continue;
+
+        switch (i)
+        {
+            case EQUIPMENT_SLOT_OFFHAND:
+                if (IsTwoHandUsed())
+                    continue;
+                if (!CanDualWield() && (getClass() == CLASS_HUNTER || getClass() == CLASS_ROGUE || getClass() == CLASS_DEATH_KNIGHT))
+                    continue;
+                // no break!
+            case EQUIPMENT_SLOT_MAINHAND:
+                if (m_items[i] && m_items[i]->GetTemplate())
+                {
+                    ilvl = m_items[i]->GetTemplate()->ItemLevel;
+                    if (m_items[i]->GetTemplate()->Quality == ITEM_QUALITY_HEIRLOOM && GetLevel() == 80)
+                        ilvl = 200;
+                    weaponSum += ilvl;
+                }
+                ++weaponCount;
+                break;
+            default:
+                if (m_items[i] && m_items[i]->GetTemplate())
+                {
+                    ilvl = m_items[i]->GetTemplate()->ItemLevel;
+                    if (m_items[i]->GetTemplate()->Quality == ITEM_QUALITY_HEIRLOOM && GetLevel() == 80)
+                        ilvl = 200;
+                    sum += ilvl;
+                }
+                ++count;
+                break;
+        }
+    }
+
+    weaponSum = (float)weaponSum / weaponCount;
+
+    sum += (float)weaponSum;
+    ++count;
+
+    m_averageItemLevel = static_cast<uint16>(((float)sum) / count);
 }

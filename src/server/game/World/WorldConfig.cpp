@@ -304,6 +304,9 @@ void WorldConfig::BuildConfigCache()
     SetConfigValue<uint32>(CONFIG_LOGDB_CLEARINTERVAL, "LogDB.Opt.ClearInterval", 10, ConfigValueCache::Reloadable::Yes, [](uint32 const& value) { return value > 0; }, "> 0");
     SetConfigValue<uint32>(CONFIG_LOGDB_CLEARTIME, "LogDB.Opt.ClearTime", 1209600);
 
+    SetConfigValue<bool>(CONFIG_SHOP_ENABLE, "Shop.Enabled", false);
+    SetConfigValue<uint32>(CONFIG_SHOP_INTERVAL_UPDATE, "ShopUpdateInterval", 1 * MINUTE * IN_MILLISECONDS);
+
     SetConfigValue<uint32>(CONFIG_MAX_ALLOWED_MMR_DROP, "MaxAllowedMMRDrop", 500);
     SetConfigValue<bool>(CONFIG_ENABLE_LOGIN_AFTER_DC, "EnableLoginAfterDC", true);
     SetConfigValue<bool>(CONFIG_DONT_CACHE_RANDOM_MOVEMENT_PATHS, "DontCacheRandomMovementPaths", false);

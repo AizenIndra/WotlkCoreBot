@@ -55,7 +55,7 @@ void Player::Update(uint32 p_time)
 {
     if (!IsInWorld())
         return;
-
+ 
     sScriptMgr->OnPlayerBeforeUpdate(this, p_time);
 
     GetAnticheat()->update(p_time);

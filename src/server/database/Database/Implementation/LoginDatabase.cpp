@@ -156,6 +156,14 @@ void LoginDatabaseConnection::DoPrepareStatements()
     PrepareStatement(LOGIN_INS_ACCOUNT_ANTICHEAT, "INSERT INTO anticheat_logs (`account`, `player`, `description`, `position`, `realmId`) VALUES (?, ?, ?, ?, ?)", CONNECTION_ASYNC);
 
     PrepareStatement(LOGIN_INS_UPTIME, "INSERT INTO uptime (realmid, starttime, uptime, revision) VALUES (?, ?, 0, ?)", CONNECTION_ASYNC);
+
+    //Store
+    PrepareStatement(LOGIN_UPD_STORE_BALANCE, "UPDATE account_donate SET bonuses = ? WHERE id = ?", CONNECTION_BOTH);
+    PrepareStatement(LOGIN_UPD_STORE_VOTE, "UPDATE account_donate SET votes = ? WHERE id = ?", CONNECTION_BOTH);
+    PrepareStatement(LOGIN_INS_STORE_LOGS, "INSERT INTO custom_store_logs (character_ID, character_name, account_ID, serviceName, itemID, itemCount, totalPrice, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
+    PrepareStatement(LOGIN_SEL_SHOP_BONUS, "SELECT bonuses FROM account_donate WHERE id = ?", CONNECTION_SYNCH);
+    PrepareStatement(LOGIN_SEL_SHOP_VOTE, "SELECT votes FROM account_donate WHERE id = ?", CONNECTION_SYNCH);
+    PrepareStatement(LOGIN_INSERT_STORE_BALANCE, "INSERT INTO account_donate VALUES (?, ?, ?, ?, ?)", CONNECTION_ASYNC);
 }
 
 LoginDatabaseConnection::LoginDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo)

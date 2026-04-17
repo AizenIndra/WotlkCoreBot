@@ -108,6 +108,16 @@ void ScriptMgr::OnPlayerFreeTalentPointsChanged(Player* player, uint32 points)
     CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ON_FREE_TALENT_POINTS_CHANGED, script->OnPlayerFreeTalentPointsChanged(player, points));
 }
 
+void ScriptMgr::OnPlayerEquipItem(Player* player, uint32 itemEntry)
+{
+    CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ON_PLAYER_EQUIP_ITEM, script->OnPlayerEquipItem(player, itemEntry));
+}
+
+void ScriptMgr::OnPlayerUnEquipItem(Player* player, uint32 itemEntry)
+{
+    CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ON_PLAYER_UNEQUIP_ITEM, script->OnPlayerUnEquipItem(player, itemEntry));
+}
+
 void ScriptMgr::OnPlayerTalentsReset(Player* player, bool noCost)
 {
     CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ON_TALENTS_RESET, script->OnPlayerTalentsReset(player, noCost));
