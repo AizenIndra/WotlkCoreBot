@@ -4954,6 +4954,56 @@ Shop.Enabled = 1
 ###################################################################################################
 
 ###################################################################################################
+# PREMIUM / VIP
+#
+#    Config.Vip.*
+#        Description: Enable or disable premium/VIP command features (e.g. .vip debuff, .vip bank).
+#        Default:     0 - (Disabled)
+#
+#    Config.Vip.Debuff.Spell
+#        Description: Spell ID of premium aura applied after .vip debuff removes negative auras. 0 = no aura.
+#        Default:     80867
+#
+#    Config.Vip.Buff.Command / Config.Vip.Buff.Spells
+#        Description: .vip buff applies comma-separated spell IDs (e.g. "1234,5678"). Empty = no buffs.
+#
+#    Rate.XP.Kill.Premium
+#    Rate.XP.Quest.Premium
+#    Rate.XP.Quest.DF.Premium
+#    Rate.XP.Explore.Premium
+#    Rate.Honor.Premium
+#    Rate.Reputation.Gain.Premium
+#        Description: Rate multipliers for premium accounts (XP, honor, reputation).
+#        Default:     1
+
+Config.Vip.Debuff.Command       = 0
+Config.Vip.Debuff.Spell         = 80867
+Config.Vip.Buff.Command        = 0
+Config.Vip.Buff.Spells         = ""
+Config.Vip.Bank.Command        = 0
+Config.Vip.Mail.Command        = 0
+Config.Vip.Repair.Command      = 0
+Config.Vip.Reset.Talents.Command = 0
+Config.Vip.Taxi.Command        = 0
+Config.Vip.Home.Command        = 0
+Config.Vip.Change.Race.Command = 0
+Config.Vip.Customize.Command   = 0
+Config.Vip.Capital.Command     = 0
+Config.Vip.Appear.Command      = 0
+
+Rate.XP.Kill.Premium           = 1
+Rate.XP.Quest.Premium          = 1
+Rate.XP.Quest.DF.Premium       = 1
+Rate.XP.Explore.Premium        = 1
+Rate.Honor.Premium             = 1
+Rate.Reputation.Gain.Premium   = 1
+SkillGain.Crafting.Premium  = 1
+SkillGain.Gathering.Premium = 1
+
+#
+###################################################################################################
+
+###################################################################################################
 #                                                                                                 #
 # GAME SETTINGS END                                                                               #
 #                                                                                                 #

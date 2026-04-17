@@ -669,6 +669,31 @@ void WorldConfig::BuildConfigCache()
     // Realm Availability
     SetConfigValue<bool>(CONFIG_REALM_LOGIN_ENABLED, "World.RealmAvailability", true);
 
+    // VIP system
+    SetConfigValue<bool>(CONFIG_VIP_DEBUFF, "Config.Vip.Debuff.Command", false);
+    SetConfigValue<uint32>(CONFIG_VIP_DEBUFF_SPELL, "Config.Vip.Debuff.Spell", 80867);
+    SetConfigValue<bool>(CONFIG_VIP_BUFF, "Config.Vip.Buff.Command", false);
+    SetConfigValue<std::string>(CONFIG_VIP_BUFF_SPELLS, "Config.Vip.Buff.Spells", "");
+    SetConfigValue<bool>(CONFIG_VIP_BANK, "Config.Vip.Bank.Command", false);
+    SetConfigValue<bool>(CONFIG_VIP_MAIL, "Config.Vip.Mail.Command", false);
+    SetConfigValue<bool>(CONFIG_VIP_REPAIR, "Config.Vip.Repair.Command", false);
+    SetConfigValue<bool>(CONFIG_VIP_RESET_TALENTS, "Config.Vip.Reset.Talents.Command", false);
+    SetConfigValue<bool>(CONFIG_VIP_TAXI, "Config.Vip.Taxi.Command", false);
+    SetConfigValue<bool>(CONFIG_VIP_HOME, "Config.Vip.Home.Command", false);
+    SetConfigValue<bool>(CONFIG_VIP_CHANGE_RACE, "Config.Vip.Change.Race.Command", false);
+    SetConfigValue<bool>(CONFIG_VIP_CUSTOMIZE, "Config.Vip.Customize.Command", false);
+    SetConfigValue<bool>(CONFIG_VIP_CAPITAL, "Config.Vip.Capital.Command", false);
+    SetConfigValue<bool>(CONFIG_VIP_APPEAR, "Config.Vip.Appear.Command", false);
+    // Rate premium
+    SetConfigValue<float>(RATE_VIP_XP_KILL, "Rate.XP.Kill.Premium", 1.0f);
+    SetConfigValue<float>(RATE_VIP_XP_QUEST, "Rate.XP.Quest.Premium", 1.0f);
+    SetConfigValue<float>(RATE_VIP_HONOR, "Rate.Honor.Premium", 1.0f);
+    SetConfigValue<float>(RATE_VIP_REPUTATION, "Rate.Reputation.Gain.Premium", 1.0f);
+    SetConfigValue<float>(RATE_VIP_XP_QUEST_DF, "Rate.XP.Quest.DF.Premium", 1.0f);
+    SetConfigValue<float>(RATE_VIP_XP_EXPLORE, "Rate.XP.Explore.Premium", 1.0f);
+    SetConfigValue<uint32>(CONFIG_SKILL_GAIN_CRAFTING_VIP, "SkillGain.Crafting.Premium", 1);
+    SetConfigValue<uint32>(CONFIG_SKILL_GAIN_GATHERING_VIP, "SkillGain.Gathering.Premium", 1);
+
     // AH Worker threads
     SetConfigValue<uint32>(CONFIG_AUCTIONHOUSE_WORKERTHREADS, "AuctionHouse.WorkerThreads", 1, ConfigValueCache::Reloadable::No, [](uint32 const& value) { return value >= 1; }, ">= 1");
 

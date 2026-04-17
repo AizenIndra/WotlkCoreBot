@@ -59,6 +59,13 @@ namespace AccountMgr
     bool IsGMAccount(uint32 gmlevel);
     bool IsAdminAccount(uint32 gmlevel);
     bool IsConsoleAccount(uint32 gmlevel);
+
+    uint32 GetGuidOfOnlineCharacter(uint32 accountId);
+    time_t GetVIPunsetDate(uint32 accountId);
+    bool GetVipStatus(uint32 accountId);
+    void SetVipStatus(uint32 accountId, time_t unsetdate);
+    void RemoveVipStatus(uint32 accountId);
+    void UpdateVipStatus(uint32 accountId, time_t unsetdate);
 };
 
 #endif

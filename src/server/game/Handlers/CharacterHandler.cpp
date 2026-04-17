@@ -781,6 +781,32 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket& recvData)
         });
 }
 
+void WorldSession::LoadPremiumStatusToPlayer(Player* player)
+{
+    if (!player)
+        return;
+    bool vip = AccountMgr::GetVipStatus(GetAccountId());
+    if (vip)
+    {
+        time_t unsetdate = AccountMgr::GetVIPunsetDate(GetAccountId());
+        if (GameTime::GetGameTime().count() > unsetdate)
+        {
+            vip = false;
+            AccountMgr::RemoveVipStatus(GetAccountId());
+            if (uint32 debuffSpell = sWorld->getIntConfig(CONFIG_VIP_DEBUFF_SPELL))
+                player->RemoveAurasDueToSpell(debuffSpell);
+        }
+        else
+            player->SetPremiumUnsetdate(unsetdate);
+    }
+    else
+    {
+        if (uint32 debuffSpell = sWorld->getIntConfig(CONFIG_VIP_DEBUFF_SPELL))
+            player->RemoveAurasDueToSpell(debuffSpell);
+    }
+    player->SetPremiumStatus(vip);
+}
+
 void WorldSession::HandlePlayerLoginFromDB(LoginQueryHolder const& holder)
 {
     m_playerLoading = true;
@@ -1044,6 +1070,8 @@ void WorldSession::HandlePlayerLoginFromDB(LoginQueryHolder const& holder)
     if (pCurrChar->IsGameMaster())
         ChatHandler(this).SendNotification(LANG_GM_ON);
 
+        LoadPremiumStatusToPlayer(pCurrChar);
+
     std::string IP_str = GetRemoteAddress();
     LOG_INFO("entities.player", "Account: {} (IP: {}) Login Character:[{}] ({}) Level: {}",
         GetAccountId(), IP_str, pCurrChar->GetName(), pCurrChar->GetGUID().ToString(), pCurrChar->GetLevel());
@@ -1124,6 +1152,8 @@ void WorldSession::HandlePlayerLoginToCharInWorld(Player* pCurrChar)
 {
     ChatHandler chH = ChatHandler(this);
     m_playerLoading = true;
+
+    LoadPremiumStatusToPlayer(pCurrChar);
 
     pCurrChar->SendDungeonDifficulty(false);
 

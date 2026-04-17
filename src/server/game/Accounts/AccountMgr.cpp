@@ -27,6 +27,8 @@
 
 namespace AccountMgr
 {
+    // account_premium.unsetdate is INT UNSIGNED; avoid out-of-range read/write
+    static constexpr uint32 PREMIUM_UNSETDATE_MAX = 4294967295u;
 
     AccountOpResult CreateAccount(std::string username, std::string password, std::string email /*= ""*/)
     {
@@ -338,6 +340,58 @@ namespace AccountMgr
     bool IsConsoleAccount(uint32 gmlevel)
     {
         return gmlevel == SEC_CONSOLE;
+    }
+
+    uint32 GetGuidOfOnlineCharacter(uint32 accountId)
+    {
+        CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_GET_CHARACTERS_ONLINE_ON_ACCOUNT);
+        stmt->SetData(0, accountId);
+        PreparedQueryResult result = CharacterDatabase.Query(stmt);
+        return (result) ? (*result)[0].Get<uint32>() : 0;
+    }
+    time_t GetVIPunsetDate(uint32 accountId)
+    {
+        LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_GET_ACCOUNT_PREMIUM_UNSETDATE_BY_ID);
+        stmt->SetData(0, accountId);
+        PreparedQueryResult result = LoginDatabase.Query(stmt);
+        if (!result)
+            return 0;
+        uint64 val = (*result)[0].Get<uint64>();
+        if (val > PREMIUM_UNSETDATE_MAX)
+            return 0;
+        return static_cast<time_t>(val);
+    }
+    bool GetVipStatus(uint32 accountId)
+    {
+        LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_GET_ACCOUNT_PREMIUM_STATUS_BY_ID);
+        stmt->SetData(0, accountId);
+        PreparedQueryResult result = LoginDatabase.Query(stmt);
+        if (result)
+            return true;
+        return false;
+    }
+    void SetVipStatus(uint32 accountId, time_t unsetdate)
+    {
+        uint32 clamped = (unsetdate < 0) ? 0u : (static_cast<uint64>(unsetdate) > PREMIUM_UNSETDATE_MAX ? PREMIUM_UNSETDATE_MAX : static_cast<uint32>(unsetdate));
+        LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SET_ACCOUNT_PREMIUM);
+        stmt->SetData(0, accountId);
+        stmt->SetData(1, clamped);
+        stmt->SetData(2, true);
+        LoginDatabase.Execute(stmt);
+    }
+    void RemoveVipStatus(uint32 accountId)
+    {
+        LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_DEL_ACCOUNT_PREMIUM);
+        stmt->SetData(0, accountId);
+        LoginDatabase.Execute(stmt);
+    }
+    void UpdateVipStatus(uint32 accountId, time_t unsetdata)
+    {
+        uint32 clamped = (unsetdata < 0) ? 0u : (static_cast<uint64>(unsetdata) > PREMIUM_UNSETDATE_MAX ? PREMIUM_UNSETDATE_MAX : static_cast<uint32>(unsetdata));
+        LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_UPD_ACCOUNT_PREMIUM);
+        stmt->SetData(0, clamped);
+        stmt->SetData(1, accountId);
+        LoginDatabase.Execute(stmt);
     }
 
 } // Namespace AccountMgr

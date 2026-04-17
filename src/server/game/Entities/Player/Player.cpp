@@ -292,6 +292,11 @@ Player::Player(WorldSession* session): Unit(), m_mover(this), _cinematicMgr(*thi
     m_resetTalentsTime = 0;
     m_itemUpdateQueueBlocked = false;
 
+    /////////////////// VIP System /////////////////////
+    m_premiumTimer = 0;
+    m_vip = false;
+    m_unsetdate = 0;
+
     for (uint8 i = 0; i < MAX_MOVE_TYPE; ++i)
         m_forced_speed_changes[i] = 0;
 
@@ -1618,6 +1623,11 @@ bool Player::TeleportToEntryPoint()
     }
 
     return TeleportTo(loc);
+}
+
+bool Player::TeleportToHomebind()
+{
+    return TeleportTo(m_homebindMapId, m_homebindX, m_homebindY, m_homebindZ, GetOrientation());
 }
 
 void Player::ProcessDelayedOperations()
@@ -4698,7 +4708,7 @@ void Player::DurabilityPointsLossAll(int32 points, bool inventory)
 
 void Player::DurabilityPointsLoss(Item* item, int32 points)
 {
-    if (HasPreventDurabilityLossAura())
+    if (HasPreventDurabilityLossAura() || IsPremium())
         return;
 
     int32 pMaxDurability = item->GetUInt32Value(ITEM_FIELD_MAXDURABILITY);
@@ -5798,10 +5808,11 @@ void Player::CheckAreaExploreAndOutdoor()
             else
             {
                 int32 diff = int32(GetLevel()) - areaEntry->area_level;
+                float exploreRate = IsPremium() ? sWorld->getRate(RATE_VIP_XP_EXPLORE) : sWorld->getRate(RATE_XP_EXPLORE);
                 uint32 XP = 0;
                 if (diff < -5)
                 {
-                    XP = uint32(sObjectMgr->GetBaseXP(GetLevel() + 5) * sWorld->getRate(RATE_XP_EXPLORE));
+                    XP = uint32(sObjectMgr->GetBaseXP(GetLevel() + 5) * exploreRate);
                 }
                 else if (diff > 5)
                 {
@@ -5811,11 +5822,11 @@ void Player::CheckAreaExploreAndOutdoor()
                     else if (exploration_percent < 0)
                         exploration_percent = 0;
 
-                    XP = uint32(sObjectMgr->GetBaseXP(areaEntry->area_level) * exploration_percent / 100 * sWorld->getRate(RATE_XP_EXPLORE));
+                        XP = uint32(sObjectMgr->GetBaseXP(areaEntry->area_level) * exploration_percent / 100 * exploreRate);
                 }
                 else
                 {
-                    XP = uint32(sObjectMgr->GetBaseXP(areaEntry->area_level) * sWorld->getRate(RATE_XP_EXPLORE));
+                    XP = uint32(sObjectMgr->GetBaseXP(areaEntry->area_level) * exploreRate);
                 }
 
                 sScriptMgr->OnPlayerGiveXP(this, XP, nullptr, PlayerXPSource::XPSOURCE_EXPLORE);
@@ -6194,7 +6205,7 @@ bool Player::RewardHonor(Unit* uVictim, uint32 groupsize, int32 honor, bool awar
         AddPct(honor_f, GetMaxPositiveAuraModifier(SPELL_AURA_MOD_HONOR_GAIN_PCT));
     }
 
-    honor_f *= sWorld->getRate(RATE_HONOR);
+    honor_f *= (IsPremium() ? sWorld->getRate(RATE_VIP_HONOR) : sWorld->getRate(RATE_HONOR));
     // Back to int now
     honor = int32(honor_f);
     // honor - for show honor points in log
@@ -16264,7 +16275,7 @@ uint16 Player::GetMaxSkillValueForLevel() const
 
 float Player::GetQuestRate(bool isDFQuest)
 {
-    float result = isDFQuest ? sWorld->getRate(RATE_XP_QUEST_DF) : sWorld->getRate(RATE_XP_QUEST);
+    float result = IsPremium() ? (isDFQuest ? sWorld->getRate(RATE_VIP_XP_QUEST_DF) : sWorld->getRate(RATE_VIP_XP_QUEST)) : (isDFQuest ? sWorld->getRate(RATE_XP_QUEST_DF) : sWorld->getRate(RATE_XP_QUEST));
 
     sScriptMgr->OnPlayerGetQuestRate(this, result);
 
@@ -16484,4 +16495,13 @@ bool Player::LearnAllRecipesInProfession(Player* player, SkillType skill)
     player->SetSkill(SkillInfo->id, player->GetSkillStep(SkillInfo->id), maxLevel, maxLevel);
     //handler.PSendSysMessage(LANG_COMMAND_LEARN_ALL_RECIPES, skill_name);
     return true;
+}
+
+void Player::SetPremiumStatus(bool vipstatus)
+{
+    m_vip = vipstatus;
+    if (m_vip)
+        m_premiumTimer = MINUTE * IN_MILLISECONDS; // 60 seconds, check premium expiry interval
+    else
+        m_premiumTimer = 0;
 }

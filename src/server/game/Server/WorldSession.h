@@ -59,6 +59,12 @@ struct ItemTemplate;
 struct MovementInfo;
 struct TradeStatusInfo;
 
+struct AccountPremiumInfo
+{
+    uint32 setDate = 0;
+    uint32 unsetDate = 0;
+};
+
 namespace lfg
 {
     struct LfgJoinResultData;
@@ -534,6 +540,12 @@ public:
 
     void SendAttackStop(Unit const* enemy);
 
+    //Premium
+    void LoadAccountPremium(AccountPremiumInfo data);
+    void SetAccountPremium(uint32 premiumTime);
+    void UnsetAccountPremium();
+    uint32 GetAccountPremiumUnsetTime();
+    
     void SendBattleGroundList(ObjectGuid guid, BattlegroundTypeId bgTypeId = BATTLEGROUND_RB);
 
     void SendTradeStatus(TradeStatusInfo const& info);
@@ -664,6 +676,7 @@ public:                                                 // opcodes handlers
     void HandleCharEnum(PreparedQueryResult result);
     void HandlePlayerLoginFromDB(LoginQueryHolder const& holder);
     void HandlePlayerLoginToCharInWorld(Player* pCurrChar);
+    void LoadPremiumStatusToPlayer(Player* player);
     void HandlePlayerLoginToCharOutOfWorld(Player* pCurrChar);
     void HandleCharFactionOrRaceChange(WorldPacket& recvData);
     void HandleCharFactionOrRaceChangeCallback(std::shared_ptr<CharacterFactionChangeInfo> factionChangeInfo, PreparedQueryResult result);
@@ -1317,6 +1330,9 @@ private:
     std::map<uint32, uint32> _pendingTimeSyncRequests; // key: counter. value: server time when packet with that counter was sent.
     uint32 _timeSyncNextCounter;
     uint32 _timeSyncTimer;
+
+    uint32 premiumSetDate = 0;
+    uint32 premiumUnsetDate = 0;
 
     uint32 _orderCounter;
 

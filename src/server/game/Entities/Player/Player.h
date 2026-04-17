@@ -1109,6 +1109,7 @@ public:
         return TeleportTo(loc.GetMapId(), loc.GetPositionX(), loc.GetPositionY(), loc.GetPositionZ(), loc.GetOrientation(), options, target);
     }
     bool TeleportToEntryPoint();
+    bool TeleportToHomebind();
 
     void SetSummonPoint(uint32 mapid, float x, float y, float z, uint32 delay = 0, bool asSpectator = false);
     [[nodiscard]] bool IsSummonAsSpectator() const;
@@ -2068,6 +2069,12 @@ public:
     void ResurrectPlayer(float restore_percent, bool applySickness = false);
     void BuildPlayerRepop();
     void RepopAtGraveyard();
+
+    // VIP
+    void SetPremiumStatus(bool vipstatus);
+    bool IsPremium() const { return m_vip; }
+    void SetPremiumUnsetdate(time_t unsetdate) { m_unsetdate = unsetdate; }
+    time_t GetPremiumUnsetdate() const { return m_unsetdate; }
 
     void SendDurabilityLoss();
     void DurabilityLossAll(double percent, bool inventory);
@@ -3044,6 +3051,11 @@ private:
     bool m_canKnockback;
 
     std::unique_ptr<PetStable> m_petStable;
+
+    // VIP
+    bool m_vip;                 // Used for VIP func
+    uint32 m_premiumTimer;
+    time_t m_unsetdate;         // time (unixtime) of unsetdate vip previlegies
 
     // Temporary removed pet cache
     uint32 m_temporaryUnsummonedPetNumber;

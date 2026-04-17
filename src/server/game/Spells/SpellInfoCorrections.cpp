@@ -20,6 +20,7 @@
 #include "GameGraveyard.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
+#include "World.h"
 
 inline void ApplySpellFix(std::initializer_list<uint32> spellIds, void(*fix)(SpellInfo*))
 {
@@ -5265,6 +5266,16 @@ void SpellMgr::LoadSpellInfoCorrections()
         {
             spellInfo->AttributesEx6 |= SPELL_ATTR6_NO_CATEGORY_COOLDOWN_MODS;
         }
+    }
+
+    // Premium debuff (Config.Vip.Debuff.Spell)
+    if (uint32 vipDebuffSpell = sWorld->getIntConfig(CONFIG_VIP_DEBUFF_SPELL))
+    {
+        ApplySpellFix({ vipDebuffSpell }, [](SpellInfo* spellInfo)
+        {
+            spellInfo->Attributes |= SPELL_ATTR0_AURA_IS_DEBUFF;
+            spellInfo->AttributesEx4 |= SPELL_ATTR4_AURA_EXPIRES_OFFLINE;
+        });
     }
 
     // Xinef: The Veiled Sea area in outlands (Draenei zone), client blocks casting flying mounts

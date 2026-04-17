@@ -1012,6 +1012,11 @@ void ScriptMgr::OnPlayerLearnTaxiNode(Player const* player, uint32 nodeId)
     CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ON_LEARN_TAXI_NODE, script->OnPlayerLearnTaxiNode(player, nodeId));
 }
 
+void ScriptMgr::OnPremiumExpired(Player* player)
+{
+    CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ON_PREMIUM_EXPIRED, script->OnPremiumExpired(player));
+}
+
 PlayerScript::PlayerScript(const char* name, std::vector<uint16> enabledHooks)
     : ScriptObject(name, PLAYERHOOK_END)
 {

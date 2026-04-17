@@ -219,6 +219,7 @@ enum PlayerHook
     PLAYERHOOK_ON_GIVE_REPUTATION,
     PLAYERHOOK_ON_GET_REPUTATION_PRICE_DISCOUNT,
     PLAYERHOOK_ON_LEARN_TAXI_NODE,
+    PLAYERHOOK_ON_PREMIUM_EXPIRED,
     PLAYERHOOK_END
 };
 
@@ -844,6 +845,8 @@ public:
      * @param nodeId The id of the learned taxi node
      */
     virtual void OnPlayerLearnTaxiNode(Player const* /*player*/, uint32 /*nodeId*/) {}
+
+    virtual void OnPremiumExpired(Player* /*player*/) { }
 };
 
 #endif

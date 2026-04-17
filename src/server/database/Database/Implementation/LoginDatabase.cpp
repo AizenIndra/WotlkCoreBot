@@ -164,6 +164,17 @@ void LoginDatabaseConnection::DoPrepareStatements()
     PrepareStatement(LOGIN_SEL_SHOP_BONUS, "SELECT bonuses FROM account_donate WHERE id = ?", CONNECTION_SYNCH);
     PrepareStatement(LOGIN_SEL_SHOP_VOTE, "SELECT votes FROM account_donate WHERE id = ?", CONNECTION_SYNCH);
     PrepareStatement(LOGIN_INSERT_STORE_BALANCE, "INSERT INTO account_donate VALUES (?, ?, ?, ?, ?)", CONNECTION_ASYNC);
+    
+    // Premium
+    PrepareStatement(LOGIN_SEL_IS_PREMIUM, "SELECT active FROM account_premium WHERE id = ?", CONNECTION_SYNCH);
+    PrepareStatement(LOGIN_INS_ACCOUNT_PREMIUM, "REPLACE INTO `account_premium` (`id`, `setdate`, `unsetdate`, `active`) VALUES (?,?,?,?)", CONNECTION_ASYNC);
+    PrepareStatement(LOGIN_UPD_ACCOUNT_PREMIUM_NEW, "UPDATE `account_premium` SET setdate = ?, unsetdate = ?, active = 1 WHERE id = ?", CONNECTION_ASYNC);
+    PrepareStatement(LOGIN_REM_ACCOUNT_PREMIUM, "UPDATE `account_premium` SET active = 0 WHERE id = ?", CONNECTION_ASYNC);
+    PrepareStatement(LOGIN_SET_ACCOUNT_PREMIUM, "REPLACE INTO account_premium (id, setdate, unsetdate, active) VALUES (?, unix_timestamp(NOW()), ?, ?)", CONNECTION_ASYNC);
+    PrepareStatement(LOGIN_DEL_ACCOUNT_PREMIUM, "DELETE FROM account_premium WHERE id = ?", CONNECTION_ASYNC);
+    PrepareStatement(LOGIN_UPD_ACCOUNT_PREMIUM, "UPDATE account_premium SET setdate = unix_timestamp(NOW()), unsetdate = ? WHERE id = ?", CONNECTION_ASYNC);
+    PrepareStatement(LOGIN_GET_ACCOUNT_PREMIUM_STATUS_BY_ID, "SELECT 1 FROM account_premium WHERE id = ? AND active = 1 AND unsetdate > UNIX_TIMESTAMP()", CONNECTION_SYNCH);
+    PrepareStatement(LOGIN_GET_ACCOUNT_PREMIUM_UNSETDATE_BY_ID, "SELECT unsetdate FROM account_premium WHERE id = ?", CONNECTION_SYNCH);
 }
 
 LoginDatabaseConnection::LoginDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo)
