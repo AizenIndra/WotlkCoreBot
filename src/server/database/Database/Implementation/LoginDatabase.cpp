@@ -160,9 +160,10 @@ void LoginDatabaseConnection::DoPrepareStatements()
     //Store
     PrepareStatement(LOGIN_UPD_STORE_BALANCE, "UPDATE account_donate SET bonuses = ? WHERE id = ?", CONNECTION_BOTH);
     PrepareStatement(LOGIN_UPD_STORE_VOTE, "UPDATE account_donate SET votes = ? WHERE id = ?", CONNECTION_BOTH);
-    PrepareStatement(LOGIN_INS_STORE_LOGS, "INSERT INTO custom_store_logs (character_ID, character_name, account_ID, serviceName, itemID, itemCount, totalPrice, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
+    PrepareStatement(LOGIN_UPD_STORE_LOYALTY, "UPDATE account_donate SET total_bonuses = ? WHERE id = ?", CONNECTION_BOTH);
     PrepareStatement(LOGIN_SEL_SHOP_BONUS, "SELECT bonuses FROM account_donate WHERE id = ?", CONNECTION_SYNCH);
     PrepareStatement(LOGIN_SEL_SHOP_VOTE, "SELECT votes FROM account_donate WHERE id = ?", CONNECTION_SYNCH);
+    PrepareStatement(LOGIN_INS_STORE_LOGS, "INSERT INTO custom_store_logs (character_ID, character_name, account_ID, serviceName, itemID, itemCount, totalPrice, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
     PrepareStatement(LOGIN_INSERT_STORE_BALANCE, "INSERT INTO account_donate VALUES (?, ?, ?, ?, ?)", CONNECTION_ASYNC);
     
     // Premium
@@ -175,6 +176,9 @@ void LoginDatabaseConnection::DoPrepareStatements()
     PrepareStatement(LOGIN_UPD_ACCOUNT_PREMIUM, "UPDATE account_premium SET setdate = unix_timestamp(NOW()), unsetdate = ? WHERE id = ?", CONNECTION_ASYNC);
     PrepareStatement(LOGIN_GET_ACCOUNT_PREMIUM_STATUS_BY_ID, "SELECT 1 FROM account_premium WHERE id = ? AND active = 1 AND unsetdate > UNIX_TIMESTAMP()", CONNECTION_SYNCH);
     PrepareStatement(LOGIN_GET_ACCOUNT_PREMIUM_UNSETDATE_BY_ID, "SELECT unsetdate FROM account_premium WHERE id = ?", CONNECTION_SYNCH);
+
+    PrepareStatement(LOGIN_INS_GM_CHAR_ITEM_ADD, "INSERT INTO account_gm_log_item (guid, player, account, item, item_guid, count, position, target, realmId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
+    PrepareStatement(LOGIN_INS_GM_CHAR_LOG, "INSERT INTO account_gm_log (player, account, command, position, selected, realmId) VALUES (?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
 }
 
 LoginDatabaseConnection::LoginDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo)
