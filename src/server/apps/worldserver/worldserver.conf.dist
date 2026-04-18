@@ -3770,6 +3770,18 @@ Battleground.PremadeGroupWaitForMatch = 1800000
 Battleground.GiveXPForKills = 0
 
 #
+# RankSystem
+#    RankSystem.RewardWinArenaEnable
+#        Description: Enable rank points and money rewards for PvP wins/kills.
+#        Default:     1 - (Enabled)
+#                     0 - (Disabled)
+#
+RankSystem.RewardWinArenaEnable = 1
+RankSystem.RewardWinArena = 25
+RankSystem.RewardWinBG = 150
+RankSystem.RewardKillBG = 10
+
+#
 #    Battleground.Random.ResetHour
 #        Description: Hour of the day when the global instance resets occur.
 #        Range:       0-23
@@ -4976,6 +4988,7 @@ Shop.Enabled = 1
 #    Rate.XP.Explore.Premium
 #    Rate.Honor.Premium
 #    Rate.Reputation.Gain.Premium
+#    Rate.Rank.Reward.Premium
 #        Description: Rate multipliers for premium accounts (XP, honor, reputation).
 #        Default:     1
 #
@@ -5014,6 +5027,7 @@ Rate.XP.Quest.DF.Premium         = 1
 Rate.XP.Explore.Premium          = 1
 Rate.Honor.Premium               = 1
 Rate.Reputation.Gain.Premium     = 1
+Rate.Rank.Reward.Premium         = 1
 SkillGain.Crafting.Premium       = 1
 SkillGain.Gathering.Premium      = 1
 

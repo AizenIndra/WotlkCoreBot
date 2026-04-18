@@ -464,6 +464,7 @@ void WorldConfig::BuildConfigCache()
     SetConfigValue<bool>(CONFIG_ARENA_QUEUE_ANNOUNCER_ENABLE, "Arena.QueueAnnouncer.Enable", false);
     SetConfigValue<bool>(CONFIG_ARENA_QUEUE_ANNOUNCER_PLAYERONLY, "Arena.QueueAnnouncer.PlayerOnly", false);
     SetConfigValue<uint32>(CONFIG_ARENA_QUEUE_ANNOUNCER_DETAIL, "Arena.QueueAnnouncer.Detail", 3);
+    SetConfigValue<bool>(CONFIG_RANK_SYSTEM_WIN_ENABLE, "RankSystem.RewardWinArenaEnable", true);
 
     SetConfigValue<bool>(CONFIG_OFFHAND_CHECK_AT_SPELL_UNLEARN, "OffhandCheckAtSpellUnlearn", true);
     SetConfigValue<bool>(CONFIG_CREATURE_REPOSITION_AGAINST_NPCS, "Creature.RepositionAgainstNpcs", true);
@@ -638,6 +639,9 @@ void WorldConfig::BuildConfigCache()
     SetConfigValue<uint32>(CONFIG_BG_REWARD_WINNER_ARENA_LAST, "Battleground.RewardWinnerArenaLast", 0);
     SetConfigValue<uint32>(CONFIG_BG_REWARD_LOSER_HONOR_FIRST, "Battleground.RewardLoserHonorFirst", 5);
     SetConfigValue<uint32>(CONFIG_BG_REWARD_LOSER_HONOR_LAST, "Battleground.RewardLoserHonorLast", 5);
+    SetConfigValue<uint32>(CONFIG_RANK_SYSTEM_WIN_RATE_ARENA, "RankSystem.RewardWinArena", 25);
+    SetConfigValue<uint32>(CONFIG_RANK_SYSTEM_WIN_RATE_BG, "RankSystem.RewardWinBG", 150);
+    SetConfigValue<uint32>(CONFIG_RANK_SYSTEM_KILL_RATE_BG, "RankSystem.RewardKillBG", 10);
 
     SetConfigValue<uint32>(CONFIG_WAYPOINT_MOVEMENT_STOP_TIME_FOR_PLAYER, "WaypointMovementStopTimeForPlayer", 120);
 
@@ -691,6 +695,7 @@ void WorldConfig::BuildConfigCache()
     SetConfigValue<float>(RATE_VIP_REPUTATION, "Rate.Reputation.Gain.Premium", 1.0f);
     SetConfigValue<float>(RATE_VIP_XP_QUEST_DF, "Rate.XP.Quest.DF.Premium", 1.0f);
     SetConfigValue<float>(RATE_VIP_XP_EXPLORE, "Rate.XP.Explore.Premium", 1.0f);
+    SetConfigValue<float>(RATE_VIP_RANK_REWARD, "Rate.Rank.Reward.Premium", 1.0f);
     SetConfigValue<uint32>(CONFIG_SKILL_GAIN_CRAFTING_VIP, "SkillGain.Crafting.Premium", 1);
     SetConfigValue<uint32>(CONFIG_SKILL_GAIN_GATHERING_VIP, "SkillGain.Gathering.Premium", 1);
     SetConfigValue<uint32>(CONFIG_SKILL_GAIN_CRAFTING_HARDCORE, "SkillGain.Crafting.Hardcore", 1);

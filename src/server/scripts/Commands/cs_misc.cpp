@@ -2074,6 +2074,7 @@ public:
         uint32 money                    = 0;
         uint32 xp                       = 0;
         uint32 xptotal                  = 0;
+        uint32 rankPoints               = 0;
 
         // Position data print
         uint32 mapId;
@@ -2112,6 +2113,7 @@ public:
             alive             = playerTarget->IsAlive() ? handler->GetAcoreString(LANG_YES) : handler->GetAcoreString(LANG_NO);
             gender            = playerTarget->getGender();
             phase             = playerTarget->GetPhaseMask();
+            rankPoints        = playerTarget->GetRankPoints();
         }
         // get additional information from DB
         else
@@ -2144,6 +2146,7 @@ public:
             gender             = fields[8].Get<uint8>();
             uint32 health      = fields[9].Get<uint32>();
             uint32 playerFlags = fields[10].Get<uint32>();
+            rankPoints         = fields[11].Get<uint32>();
 
             if (!health || playerFlags & PLAYER_FLAGS_GHOST)
             {
@@ -2503,6 +2506,9 @@ public:
             uint32 onlineTime = uint32(GameTime::GetGameTime().count() - playerTarget->m_logintime);
             handler->PSendSysMessage(LANG_PINFO_CHR_ONLINETIME, secsToTimeString(onlineTime, true));
         }
+
+        // Output rank points from rank system
+        handler->PSendSysMessage(LANG_PINFO_CHAR_RANK_POINTS, rankPoints);
 
         // Mail Data - an own query, because it may or may not be useful.
         // SQL: "SELECT SUM(CASE WHEN (checked & 1) THEN 1 ELSE 0 END) AS 'readmail', COUNT(*) AS 'totalmail' FROM mail WHERE `receiver` = ?"

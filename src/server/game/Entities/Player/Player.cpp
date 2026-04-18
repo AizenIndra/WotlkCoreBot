@@ -282,6 +282,7 @@ Player::Player(WorldSession* session): Unit(), m_mover(this), _cinematicMgr(*thi
     _innTriggerId = 0;
     _restBonus = 0;
     _restFlagMask = 0;
+    m_rankPoints = 0;
     ////////////////////Rest System/////////////////////
 
     m_mailsUpdated = false;
@@ -6279,6 +6280,16 @@ bool Player::RewardHonor(Unit* uVictim, uint32 groupsize, int32 honor, bool awar
 
             if (AddItem(itemID, count))
                 ChatHandler(GetSession()).PSendSysMessage("You have been awarded a token for slaying another player.");
+        }
+    }
+
+    if (sWorld->getBoolConfig(CONFIG_RANK_SYSTEM_WIN_ENABLE) && uVictim && uVictim->IsPlayer())
+    {
+        uint32 rankRate = sWorld->getIntConfig(CONFIG_RANK_SYSTEM_KILL_RATE_BG);
+        if (rankRate > 0)
+        {
+            RewardRankPoints(rankRate, PVP_KILL);
+            RewardRankMoney(6, rankRate);
         }
     }
 
@@ -14955,6 +14966,7 @@ void Player::_SaveCharacter(bool create, CharacterDatabaseTransaction trans)
         stmt->SetData(index++, GetByteValue(PLAYER_FIELD_BYTES, 2));
         stmt->SetData(index++, m_grantableLevels);
         stmt->SetData(index++, _innTriggerId);
+        stmt->SetData(index++, m_rankPoints);
         stmt->SetData(index++, m_extraBonusTalentCount);
         stmt->SetData(index++, IsHardcore() ? 1 : 0);
     }
@@ -15096,6 +15108,7 @@ void Player::_SaveCharacter(bool create, CharacterDatabaseTransaction trans)
         stmt->SetData(index++, GetByteValue(PLAYER_FIELD_BYTES, 2));
         stmt->SetData(index++, m_grantableLevels);
         stmt->SetData(index++, _innTriggerId);
+        stmt->SetData(index++, GetRankPoints());
         stmt->SetData(index++, m_extraBonusTalentCount);
         stmt->SetData(index++, IsHardcore() ? 1 : 0);
 
@@ -16394,6 +16407,194 @@ std::string Player::GetPlayerName()
     }
 
     return "|Hplayer:" + name + "|h" + color + name + "|h|r";
+}
+
+void Player::RewardRankPoints(uint32 amount, RewardSource source)
+{
+    if (amount == 0 || GetRankPoints() >= RankPointsByLevel[49])
+        return;
+
+    if (IsPremium())
+        amount = static_cast<uint32>(std::max(0.0f, amount * sWorld->getRate(RATE_VIP_RANK_REWARD)));
+
+    uint64 newTotal = static_cast<uint64>(GetRankPoints()) + amount;
+    uint32 maxRankPoints = sObjectMgr->HasRankSystemLevels()
+        ? sObjectMgr->GetRankSystemRequiredPoints(49)
+        : RankPointsByLevel[49];
+    SetRankPoints(static_cast<uint32>(std::min<uint64>(newTotal, maxRankPoints)));
+
+    char const* sourceText = "неизвестный источник";
+    switch (source)
+    {
+        case PVP_HK: sourceText = "почетное убийство"; break;
+        case PVP_BG: sourceText = "победа на поле боя"; break;
+        case PVP_ARENA: sourceText = "победа на арене"; break;
+        case PVP_QUEST: sourceText = "задание"; break;
+        case PVP_ITEM: sourceText = "использование предмета"; break;
+        case PVP_KILL: sourceText = "убийство игрока"; break;
+        case PVE_ACHIEVE: sourceText = "достижение"; break;
+        default: break;
+    }
+
+    if (!CanRankUp())
+    {
+        ChatHandler(GetSession()).PSendSysMessage(
+            "|cffff9933[Система рангов]: +{} очков за {}. До следующего ранга: {}.|r",
+            amount, sourceText, PointsUntilNextRank());
+    }
+}
+
+void Player::RewardRankMoney(uint8 type, uint32 money, bool win)
+{
+    if (money == 0)
+        return;
+
+    money = win ? money : money / 2;
+    uint32 rewardCopper = win ? money * 10000 : money * 5000;
+    ModifyMoney(rewardCopper);
+
+    char const* typeText = "активность";
+    switch (type)
+    {
+        case 2: typeText = win ? "победа на арене 2x2" : "поражение на арене 2x2"; break;
+        case 3: typeText = win ? "победа на арене 3x3" : "поражение на арене 3x3"; break;
+        case 4: typeText = win ? "победа на поле боя" : "поражение на поле боя"; break;
+        case 5: typeText = win ? "победа на арене 1x1/5x5" : "поражение на арене 1x1/5x5"; break;
+        case 6: typeText = "убийство игрока"; break;
+        default: break;
+    }
+
+    ChatHandler(GetSession()).PSendSysMessage(
+        "|cffff9933[Система рангов]: Вы получили {} золота за {}.|r",
+        money, typeText);
+}
+
+bool Player::CanRankUp()
+{
+    bool rankedUp = false;
+    uint8 currentAuraCount = GetAuraCount(RANK_SYSTEM_AURA);
+    uint8 rankFromPoints = static_cast<uint8>(GetRankByExp());
+
+    while (currentAuraCount < 50 && currentAuraCount < rankFromPoints)
+    {
+        RewardPvPRank();
+        currentAuraCount = GetAuraCount(RANK_SYSTEM_AURA);
+        rankedUp = true;
+    }
+
+    return rankedUp;
+}
+
+int Player::GetRankByExp() const
+{
+    auto thresholdFor = [](uint8 rankIndex) -> uint32
+    {
+        if (sObjectMgr->HasRankSystemLevels())
+            return sObjectMgr->GetRankSystemRequiredPoints(rankIndex);
+        return Player::RankPointsByLevel[rankIndex];
+    };
+
+    if (GetRankPoints() >= thresholdFor(49))
+        return 50;
+
+    uint8 i = 0;
+    while (i < 50 && GetRankPoints() >= thresholdFor(i))
+        ++i;
+
+    return i;
+}
+
+uint32 Player::PointsUntilNextRank() const
+{
+    int rank = GetRankByExp();
+    if (rank >= 50)
+        return 0;
+
+    uint32 nextThreshold = sObjectMgr->HasRankSystemLevels()
+        ? sObjectMgr->GetRankSystemRequiredPoints(static_cast<uint8>(rank))
+        : RankPointsByLevel[rank];
+    return nextThreshold - GetRankPoints();
+}
+
+void Player::RankControlOnLogin()
+{
+    uint8 shouldHaveAuras = static_cast<uint8>(GetRankByExp());
+    if (shouldHaveAuras == GetAuraCount(RANK_SYSTEM_AURA))
+        return;
+
+    RemoveAurasDueToSpell(RANK_SYSTEM_AURA);
+    for (uint8 i = 0; i < shouldHaveAuras; ++i)
+        AddAura(RANK_SYSTEM_AURA, this);
+}
+
+void Player::GetRangBuffInInstance(int amount)
+{
+    for (int i = 0; i < amount; ++i)
+    {
+        AddAura(62519, this); // healing +8%
+        AddAura(66721, this); // damage +5%
+    }
+}
+
+void Player::RemoveRankBuff()
+{
+    RemoveAurasDueToSpell(62519);
+    RemoveAurasDueToSpell(66721);
+}
+
+void Player::VerifiedRankBuff(Map* map)
+{
+    if (!map)
+        return;
+
+    if (map->IsRaid() || map->IsDungeon())
+    {
+        int buffStacks = GetRankByExp();
+
+        // Non-premium players receive half of rank-based instance buffs.
+        if (!IsPremium())
+            buffStacks /= 2;
+
+        if (buffStacks <= 0)
+        {
+            RemoveRankBuff();
+            return;
+        }
+
+        if (GetAuraCount(62519) != buffStacks || GetAuraCount(66721) != buffStacks)
+        {
+            RemoveRankBuff();
+            GetRangBuffInInstance(buffStacks);
+        }
+    }
+    else
+    {
+        RemoveRankBuff();
+    }
+}
+
+void Player::RewardPvPRank()
+{
+    AddAura(RANK_SYSTEM_AURA, this);
+    CastSpell(this, 47292, true);
+    ChatHandler(GetSession()).PSendSysMessage(
+        "|cffff9933[Система рангов]: Поздравляем! Вы получили новый ранг.|r");
+    VerifiedRankBuff(GetMap());
+}
+
+void Player::LoadPvPRank()
+{
+    if (GetRankByExp() < 50)
+    {
+        ChatHandler(GetSession()).PSendSysMessage(
+            "|cffff9933[Система рангов]: У вас %u очков (%u ранг). До следующего ранга: %u.|r",
+            GetRankPoints(), GetRankByExp(), PointsUntilNextRank());
+    }
+    else
+    {
+        ChatHandler(GetSession()).PSendSysMessage(
+            "|cffff9933[Система рангов]: У вас максимальный ранг.|r");
+    }
 }
 
 void Player::SetSummonPoint(uint32 mapid, float x, float y, float z, uint32 delay /*= 0*/, bool asSpectator /*= false*/)

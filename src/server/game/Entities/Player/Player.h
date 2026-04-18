@@ -88,6 +88,7 @@ typedef void(*bgZoneRef)(Battleground*, WorldPackets::WorldState::InitWorldState
 #define SKILL_TEMP_BONUS(x)    int16(PAIR32_LOPART(x))
 #define SKILL_PERM_BONUS(x)    int16(PAIR32_HIPART(x))
 #define MAKE_SKILL_BONUS(t, p) MAKE_PAIR32(t, p)
+#define RANK_SYSTEM_AURA        71201
 
 // Note: SPELLMOD_* values is aura types in fact
 enum SpellModType
@@ -2159,6 +2160,8 @@ public:
     bool GetsRecruitAFriendBonus(bool forXP);
     uint8 GetGrantableLevels() { return m_grantableLevels; }
     void SetGrantableLevels(uint8 val) { m_grantableLevels = val; }
+    uint32 GetRankPoints() const { return m_rankPoints; }
+    void SetRankPoints(uint32 val) { m_rankPoints = val; }
 
     ReputationMgr&       GetReputationMgr()       { return *m_reputationMgr; }
     [[nodiscard]] ReputationMgr const& GetReputationMgr() const { return *m_reputationMgr; }
@@ -2185,8 +2188,41 @@ public:
     /*********************************************************/
     /***                  PVP SYSTEM                       ***/
     /*********************************************************/
+    enum RewardSource
+    {
+        PVP_HK = 0,
+        PVP_BG,
+        PVP_ARENA,
+        PVP_QUEST,
+        PVP_ITEM,
+        PVP_KILL,
+        PVE_ACHIEVE
+    };
+
+    static constexpr uint32 RankPointsByLevel[50] =
+    {
+        250, 500, 1000, 2000, 4000, 8000, 16000, 32000, 60000, 80000,
+        100000, 125000, 150000, 175000, 200000, 225000, 250000, 275000,
+        300000, 350000, 400000, 450000, 500000, 550000, 600000, 650000,
+        700000, 750000, 800000, 850000, 900000, 950000, 1000000, 1100000,
+        1200000, 1300000, 1400000, 1500000, 1600000, 1700000, 1800000,
+        1900000, 2000000, 2100000, 2200000, 2300000, 2400000, 2500000,
+        2600000, 3000000
+    };
+
     void UpdateHonorFields();
     bool RewardHonor(Unit* victim, uint32 groupsize, int32 honor = -1, bool awardXP = true);
+    void RewardRankPoints(uint32 amount, RewardSource source);
+    void RewardRankMoney(uint8 type, uint32 money, bool win = true);
+    bool CanRankUp();
+    int GetRankByExp() const;
+    uint32 PointsUntilNextRank() const;
+    void RankControlOnLogin();
+    void RewardPvPRank();
+    void LoadPvPRank();
+    void GetRangBuffInInstance(int amount);
+    void RemoveRankBuff();
+    void VerifiedRankBuff(Map* map);
     [[nodiscard]] uint32 GetHonorPoints() const { return GetUInt32Value(PLAYER_FIELD_HONOR_CURRENCY); }
     [[nodiscard]] uint32 GetArenaPoints() const { return GetUInt32Value(PLAYER_FIELD_ARENA_CURRENCY); }
     void ModifyHonorPoints(int32 value, CharacterDatabaseTransaction trans = CharacterDatabaseTransaction(nullptr));      //! If trans is specified, honor save query will be added to trans
@@ -3001,6 +3037,7 @@ protected:
     bool IsAlwaysDetectableFor(WorldObject const* seer) const override;
 
     uint8 m_grantableLevels;
+    uint32 m_rankPoints;
 
     bool m_needZoneUpdate;
 

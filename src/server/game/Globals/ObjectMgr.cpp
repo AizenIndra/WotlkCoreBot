@@ -372,6 +372,8 @@ ObjectMgr::~ObjectMgr()
             delete difficultiesItr->second;
         }
     }
+
+    _rankSystemLevels.fill(0);
 }
 
 ObjectMgr* ObjectMgr::instance()
@@ -10990,4 +10992,51 @@ uint32 ObjectMgr::GetQuestMoneyReward(uint8 level, uint32 questMoneyDifficulty) 
     }
 
     return 0;
+}
+
+void ObjectMgr::LoadRankSystemLevels()
+{
+    uint32 oldMSTime = getMSTime();
+    _rankSystemLevels.fill(0);
+    _hasRankSystemLevels = false;
+
+    QueryResult result = WorldDatabase.Query("SELECT `rank`, `required_points` FROM `rank_system_levels` ORDER BY `rank` ASC");
+    if (!result)
+    {
+        LOG_INFO("server.loading", ">> Loaded 0 Rank System levels. Using built-in defaults.");
+        return;
+    }
+
+    uint32 count = 0;
+    do
+    {
+        Field* fields = result->Fetch();
+        uint8 rank = fields[0].Get<uint8>();
+        uint32 requiredPoints = fields[1].Get<uint32>();
+
+        if (rank == 0 || rank > 50)
+            continue;
+
+        _rankSystemLevels[rank - 1] = requiredPoints;
+        ++count;
+    } while (result->NextRow());
+
+    if (count == 50)
+    {
+        _hasRankSystemLevels = true;
+        LOG_INFO("server.loading", ">> Loaded {} Rank System levels in {} ms", count, GetMSTimeDiffToNow(oldMSTime));
+    }
+    else
+    {
+        _rankSystemLevels.fill(0);
+        LOG_ERROR("sql.sql", "ObjectMgr::LoadRankSystemLevels: expected 50 rows, got {}. Using built-in defaults.", count);
+    }
+}
+
+uint32 ObjectMgr::GetRankSystemRequiredPoints(uint8 rankIndex) const
+{
+    if (rankIndex >= 50 || !_hasRankSystemLevels)
+        return 0;
+
+    return _rankSystemLevels[rankIndex];
 }

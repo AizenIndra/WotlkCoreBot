@@ -1513,6 +1513,9 @@ public:
     }
 
     [[nodiscard]] uint32 GetQuestMoneyReward(uint8 level, uint32 questMoneyDifficulty) const;
+    void LoadRankSystemLevels();
+    [[nodiscard]] uint32 GetRankSystemRequiredPoints(uint8 rankIndex) const;
+    [[nodiscard]] bool HasRankSystemLevels() const { return _hasRankSystemLevels; }
 private:
     // first free id for selected id type
     uint32 _auctionId; // pussywizard: accessed by a single thread
@@ -1700,6 +1703,8 @@ private:
     PlayerShapeshiftModelMap _playerShapeshiftModel;
 
     QuestMoneyRewardStore _questMoneyRewards;
+    std::array<uint32, 50> _rankSystemLevels {};
+    bool _hasRankSystemLevels = false;
 
     struct GameobjectInstanceSavedState
     {
