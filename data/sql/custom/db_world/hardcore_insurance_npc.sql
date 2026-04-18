@@ -14,7 +14,7 @@ INSERT INTO `creature_template` (
     `KillCredit1`, `KillCredit2`, `name`, `subname`, `IconName`, `gossip_menu_id`, 
     `minlevel`, `maxlevel`, `exp`, `faction`, `npcflag`, 
     `speed_walk`, `speed_run`, `speed_swim`, `speed_flight`, `detection_range`, 
-    `scale`, `rank`, `dmgschool`, `DamageModifier`, 
+    `rank`, `dmgschool`, `DamageModifier`, 
     `BaseAttackTime`, `RangeAttackTime`, `BaseVariance`, `RangeVariance`, 
     `unit_class`, `unit_flags`, `unit_flags2`, `dynamicflags`, 
     `family`, `type`, `type_flags`, 
@@ -22,7 +22,7 @@ INSERT INTO `creature_template` (
     `mingold`, `maxgold`, `AIName`, `MovementType`, `HoverHeight`, 
     `HealthModifier`, `ManaModifier`, `ArmorModifier`, `ExperienceModifier`, 
     `RacialLeader`, `movementId`, `RegenHealth`, 
-    `mechanic_immune_mask`, `spell_school_immune_mask`, `flags_extra`, 
+    `CreatureImmunitiesId`, `flags_extra`, 
     `ScriptName`, `VerifiedBuild`
 ) VALUES (
     999999,  -- entry
@@ -45,7 +45,6 @@ INSERT INTO `creature_template` (
     1,       -- speed_swim
     1,       -- speed_flight
     20,      -- detection_range
-    1,       -- scale
     0,       -- rank (Normal)
     0,       -- dmgschool
     1,       -- DamageModifier
@@ -77,8 +76,7 @@ INSERT INTO `creature_template` (
     0,       -- RacialLeader
     0,       -- movementId
     1,       -- RegenHealth
-    0,       -- mechanic_immune_mask
-    0,       -- spell_school_immune_mask
+    0,       -- CreatureImmunitiesId
     0,       -- flags_extra
     'npc_hardcore_insurance',  -- ScriptName
     12340    -- VerifiedBuild
