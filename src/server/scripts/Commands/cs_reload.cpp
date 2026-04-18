@@ -36,6 +36,7 @@
 #include "SkillDiscovery.h"
 #include "SkillExtraItems.h"
 #include "SmartAI.h"
+#include "PromotionCodeMgr.h"
 #include "SpellMgr.h"
 #include "StringConvert.h"
 #include "TicketMgr.h"
@@ -171,6 +172,7 @@ public:
             { "vehicle_accessory",             HandleReloadVehicleAccessoryCommand,           SEC_ADMINISTRATOR, Console::Yes },
             { "vehicle_template_accessory",    HandleReloadVehicleTemplateAccessoryCommand,   SEC_ADMINISTRATOR, Console::Yes },
             { "shop",                          HandleReloadShop,                              SEC_ADMINISTRATOR, Console::Yes },
+            { "promotion_codes",               HandleReloadPromoCodeCommand,                  SEC_ADMINISTRATOR, Console::Yes },
         };
         static ChatCommandTable commandTable =
         {
@@ -1265,6 +1267,14 @@ public:
         LOG_INFO("server.loading", "Reloading game_graveyard table...");
         sGraveyard->LoadGraveyardFromDB();
         handler->SendGlobalGMSysMessage("DB table `game_graveyard` reloaded.");
+        return true;
+    }
+
+    static bool HandleReloadPromoCodeCommand(ChatHandler* handler, char const* /*args*/)
+    {
+        LOG_INFO("server.loading", "Reloading promotion_codes and promotion_codes_history tables...");
+        sPromotionCodeMgr->ReloadCodes();
+        handler->SendGlobalGMSysMessage("Promotion codes and history reloaded.");
         return true;
     }
 };

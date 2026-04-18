@@ -72,6 +72,7 @@
 #include "PlayerDump.h"
 #include "PoolMgr.h"
 #include "RaceMgr.h"
+#include "PromotionCodeMgr.h"
 #include "Realm.h"
 #include "ScriptMgr.h"
 #include "ServerMailMgr.h"
@@ -988,6 +989,10 @@ void World::SetInitialWorldSettings()
 
     LOG_INFO("server.loading", "Loading Transports...");
     sTransportMgr->SpawnContinentTransports();
+
+    ///- Initialize PromoCodes data
+    LOG_INFO("server.loading", "Loading Promo Codes...");
+    sPromotionCodeMgr->Initialize();
 
     ///- Initialize Warden
     LOG_INFO("server.loading", "Loading Warden Checks..." );

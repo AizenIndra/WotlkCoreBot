@@ -61,6 +61,9 @@
     void HandleGuildEmblemRequest(Player* player, std::string body);
 
     void HandleGuildGetReputationReward(Player* player, std::string body);
+
+    void HandlePromoCodeRewardRequest(Player* player, std::string body);
+    void HandlePromoCodeSubmitRequest(Player* player, std::string body);
 };
  
  typedef void(AddonIO::*AddonMessageHandler)(Player*, std::string);
