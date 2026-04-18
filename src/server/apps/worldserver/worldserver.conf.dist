@@ -5072,6 +5072,76 @@ SkillGain.Gathering.Hardcore     = 1
 ###################################################################################################
 
 ###################################################################################################
+# GUILD LEVEL SYSTEM
+#
+#
+#    Guild.Level.Enable
+#        Description: Enable guild leveling system (XP, levels, perks).
+#        Default:     0 - Disabled
+#                     1 - Enabled
+#
+#    Guild.TodayCap.XP
+#        Description: Daily XP cap for each guild. Once reached, the guild
+#                     stops gaining XP for the rest of the day.
+#        Default:     50000
+#
+#    Guild.Reward.Battleground.Enable
+#        Description: Enable guild XP reward for battleground participation.
+#        Default:     0 - Disabled
+#                     1 - Enabled
+#
+#    Guild.Reward.Battleground.WinnerCount
+#    Guild.Reward.Battleground.LoserCount
+#        Description: XP amount given to the guild for each battleground
+#                     win / loss if Guild.Reward.Battleground.Enable = 1.
+#        Default:     100 (win), 0 (loss)
+#
+#    Guild.Reward.Arena.Enable
+#        Description: Enable guild XP reward for rated arena matches.
+#        Default:     0 - Disabled
+#                     1 - Enabled
+#
+#    Guild.Reward.Arena.WinnerCount
+#    Guild.Reward.Arena.LoserCount
+#        Description: XP amount given to the guild for each arena win / loss
+#                     if Guild.Reward.Arena.Enable = 1.
+#        Default:     30 (win), 0 (loss)
+#
+#    Guild.Reward.OnLvlUP
+#    Guild.Reward.OnLvlUP.Count
+#        Description: Enable / amount of XP granted to the guild when a
+#                     member levels up.
+#        Default:     0 / 0
+#
+#    Guild.Reward.OnKillPlayers.Enable
+#    Guild.Reward.OnKillPlayers.Count
+#        Description: Enable / amount of XP granted per honorable kill.
+#        Default:     0 / 0
+#
+#    Guild.Reward.OnKillCreature.Enable
+#        Description: Enable guild XP reward for killing creatures that have
+#                     entries in table `creature_onkill_reward_guildxp`.
+#        Default:     0 - Disabled
+#                     1 - Enabled
+#
+Guild.Level.Enable                 = 0
+Guild.TodayCap.XP                  = 50000
+Guild.Reward.Battleground.Enable   = 0
+Guild.Reward.Battleground.WinnerCount = 100
+Guild.Reward.Battleground.LoserCount  = 0
+Guild.Reward.Arena.Enable          = 0
+Guild.Reward.Arena.WinnerCount     = 30
+Guild.Reward.Arena.LoserCount      = 0
+Guild.Reward.OnLvlUP               = 0
+Guild.Reward.OnLvlUP.Count         = 0
+Guild.Reward.OnKillPlayers.Enable  = 0
+Guild.Reward.OnKillPlayers.Count   = 0
+Guild.Reward.OnKillCreature.Enable = 0
+
+#
+###################################################################################################
+
+###################################################################################################
 #                                                                                                 #
 # GAME SETTINGS END                                                                               #
 #                                                                                                 #

@@ -1410,6 +1410,10 @@ enum AcoreStrings
     LANG_TARGETPLAYER_VIP_TIME_EXIST              = 12183,
     LANG_VIP_IN_DEVELOPMENT                       = 12184,
 
+    //Guild System
+    LANG_GUILD_LEVEL_UP                           = 12750,
+    LANG_GUILDINFO_RESET                          = 12751,
+
     LANG_MUTED_PLAYER                             = 30000, // Mute for player 2 hour
 
     // Instant Flight

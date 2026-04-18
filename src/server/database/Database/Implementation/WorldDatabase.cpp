@@ -111,6 +111,7 @@ void WorldDatabaseConnection::DoPrepareStatements()
     // 0: uint8
     PrepareStatement(WORLD_SEL_REQ_XP, "SELECT Experience FROM player_xp_for_level WHERE Level = ?", CONNECTION_SYNCH);
     PrepareStatement(WORLD_UPD_VERSION, "UPDATE version SET core_version = ?, core_revision = ?", CONNECTION_ASYNC);
+    PrepareStatement(WORLD_SEL_GUILD_REP_REWARD, "SELECT minGuildLevel, costGold FROM guild_reputation_rewards WHERE itemEntry = ?", CONNECTION_SYNCH);
 }
 
 WorldDatabaseConnection::WorldDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo)

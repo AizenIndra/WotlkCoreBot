@@ -17,8 +17,8 @@
 
  #include "AddonIO.h"
  #include "AccountMgr.h"
- #include "GameTime.h"
  #include "StringFormat.h"
+ #include "Guild.h"
  #include "ObjectAccessor.h"
  #include "ObjectMgr.h"
  #include "Chat.h"
@@ -50,9 +50,16 @@
      /*{ "ACMSG_SHOP_CATEGORY_NEW_ITEMS_REQUEST",          &AddonIO::HandleShopCategoryNewItemsRequest        },*/
      /*{ "ACMSG_SHOP_SUBSCRIBE",                           &AddonIO::HandleShopSubscribeRequest               },*/
      /*{ "ACMSG_SHOP_PURCHASE_REFUND",                     &AddonIO::HandleShopPurchaseRefundRequest          },*/
-    { "ACMSG_SHOP_COLLECTION_LOAD_REQUEST",             &AddonIO::HandleShopCollectionLoadRequest          },
-    { "ACMSG_SHOP_ITEM_COUNT",                          &AddonIO::HandleShopItemCountRequest               },
-    { "ACMSG_HARDCORE_CREATE_SET",                      &AddonIO::HandleHardcoreCreateSet                  }
+    { "ACMSG_SHOP_COLLECTION_LOAD_REQUEST",              &AddonIO::HandleShopCollectionLoadRequest          },
+    { "ACMSG_SHOP_ITEM_COUNT",                           &AddonIO::HandleShopItemCountRequest               },
+    { "ACMSG_HARDCORE_CREATE_SET",                       &AddonIO::HandleHardcoreCreateSet                  },
+    //Guild System
+    { "ACMSG_GUILD_SPELLS_REQUEST",                      &AddonIO::HandleGuildSpellsRequest                 },
+    { "ACMSG_GUILD_LEVEL_REQUEST",                       &AddonIO::HandleGuildLevelRequest                  },
+    { "ACMSG_GUILD_ONLINE_REQUEST",                      &AddonIO::HandleGuildOnlineRequest                 },
+    { "ACMSG_GUILD_ILVLS_REQUEST",                       &AddonIO::HandleGuildIlvlsRequest                  },
+    { "ACMSG_GUILD_EMBLEM_REQUEST",                      &AddonIO::HandleGuildEmblemRequest                 },
+    { "ACMSG_GUILD_GET_REPUTATION_REWARD",               &AddonIO::HandleGuildGetReputationReward           },
  };
  
  /*********SHOPSERVICE*************/
@@ -461,6 +468,13 @@ void AddonIO::HandleMessage(Player* player, std::string message)
     std::vector<std::string> args;
     boost::split(args, message, boost::is_any_of("\t"));
 
+    // Some clients send addon messages with empty body as just "Prefix"
+    // (without the "\t"). Support both:
+    //  1) "Prefix\tBody"
+    //  2) "Prefix" (-> Body = "")
+    if (args.size() == 1)
+        args.push_back("");
+
     if (args.size() != 2)
     {
         LOG_ERROR("HardCore", "AddonIO HandleMessage: expected 'Prefix\\tBody', got {} parts (msg='{}')", args.size(), message);
@@ -565,9 +579,85 @@ void AddonIO::BroadcastHardcoreDeath(std::string const& payload)
          return;
      }
  
-     player->SendAddonMessage("ASMSG_AVERAGE_ITEM_LEVEL_RESPONSE\t{}", static_cast<uint32>(std::floor(target->GetAverageItemLevel())));
+    player->SendAddonMessage("ASMSG_AVERAGE_ITEM_LEVEL_RESPONSE\t{}", static_cast<uint32>(std::floor(target->GetAverageItemLevel())));
  }
- 
+
+void AddonIO::HandleGuildGetReputationReward(Player* player, std::string body)
+{
+    if (!player)
+        return;
+
+    if (body.empty())
+        return;
+
+    uint32 itemId = 0;
+    try
+    {
+        itemId = Acore::StringTo<uint32>(body).value_or(0);
+    }
+    catch (std::exception /*ex*/)
+    {
+        itemId = 0;
+    }
+
+    if (!itemId)
+    {
+        player->SendAddonMessage("ASMSG_GUILD_GET_REPUTATION_REWARD_RESPONSE\t{}", 1); // invalid item
+        return;
+    }
+
+    Guild* guild = player->GetGuild();
+    if (!guild)
+    {
+        player->SendAddonMessage("ASMSG_GUILD_GET_REPUTATION_REWARD_RESPONSE\t{}", 2); // not in guild
+        return;
+    }
+
+    // Simple implementation: check custom table guild_reputation_rewards in world DB
+    // Columns: itemEntry, minGuildLevel, costGold (in copper)
+    WorldDatabasePreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_SEL_GUILD_REP_REWARD);
+    if (!stmt)
+    {
+        player->SendAddonMessage("ASMSG_GUILD_GET_REPUTATION_REWARD_RESPONSE\t{}", 3); // server not configured
+        return;
+    }
+
+    stmt->SetData(0, itemId);
+    if (PreparedQueryResult result = WorldDatabase.Query(stmt))
+    {
+        Field* fields = result->Fetch();
+        uint8 minLevel = fields[0].Get<uint8>();
+        uint32 cost = fields[1].Get<uint32>(); // in copper
+
+        if (guild->GetLevel() < minLevel)
+        {
+            player->SendAddonMessage("ASMSG_GUILD_GET_REPUTATION_REWARD_RESPONSE\t{}", 4); // guild level too low
+            return;
+        }
+
+        if (player->GetMoney() < cost)
+        {
+            player->SendAddonMessage("ASMSG_GUILD_GET_REPUTATION_REWARD_RESPONSE\t{}", 5); // not enough money
+            return;
+        }
+
+        if (!sObjectMgr->GetItemTemplate(itemId))
+        {
+            player->SendAddonMessage("ASMSG_GUILD_GET_REPUTATION_REWARD_RESPONSE\t{}", 1); // invalid item
+            return;
+        }
+
+        player->ModifyMoney(-int32(cost));
+        player->AddItem(itemId, 1);
+
+        player->SendAddonMessage("ASMSG_GUILD_GET_REPUTATION_REWARD_RESPONSE\t{}", 0); // OK
+    }
+    else
+    {
+        player->SendAddonMessage("ASMSG_GUILD_GET_REPUTATION_REWARD_RESPONSE\t{}", 3); // no config
+    }
+}
+
  void AddonIO::HandleShopBalanceRequest(Player* player, std::string body)
  {
      if (!player)
@@ -953,4 +1043,113 @@ void AddonIO::HandlePremiumRenewRequest(Player* player, std::string body)
         return;
     }
 
+}
+
+void AddonIO::HandleGuildSpellsRequest(Player* player, std::string /*body*/)
+{
+    if (!player)
+        return;
+
+    if (!sGuildPerkSpellsStore.empty())
+    {
+        std::string response = "ASMSG_GUILD_SPELLS_RESPONSE\t";
+        for (auto it = sGuildPerkSpellsStore.begin(); it != sGuildPerkSpellsStore.end(); ++it)
+            response += std::to_string(it->second) + ":" + std::to_string(it->first) + ",";
+
+            LOG_ERROR("guild", "Sending Guild Spell Response: {}", response);
+
+        player->SendAddonMessage(response.c_str());
+    }
+}
+
+void AddonIO::HandleGuildLevelRequest(Player* player, std::string /*body*/)
+{
+    if (!player)
+        return;
+
+    if (Guild* guild = player->GetGuild())
+    {
+        uint8 lvl = guild->GetLevel() == GUILD_MAX_LEVEL ? (GUILD_MAX_LEVEL - 1) : guild->GetLevel();
+        uint32 xp_for_old_lvl = lvl != 0 ? sWorld->GetXpForNextLevel(lvl - 1) : 0;
+        uint32 xp_for_next_lvl = sWorld->GetXpForNextLevel(lvl);
+        uint32 totalxp = xp_for_next_lvl - xp_for_old_lvl;
+        uint32 xp = guild->GetCurrentXP() - xp_for_old_lvl;
+        uint32 dailyCap = sWorld->getIntConfig(CONFIG_GUILD_DAILY_XP_CAP);
+
+        //player->SendAddonMessage("ASMSG_GUILD_LEVEL_INFO\t%d:%d:%d:%d:%d", guild->GetLevel(), xp, totalxp, guild->GetGuildTodayXP(), dailyCap);
+        //Rewriting line above , testing with buffer
+        std::string message = fmt::format("ASMSG_GUILD_LEVEL_INFO\t{}:{}:{}:{}:{}",
+            guild->GetLevel(), xp, totalxp, guild->GetGuildTodayXP(), dailyCap);
+
+        LOG_ERROR("guild", "Sent HandleGuildLevelRequest message: {}", message);
+
+        player->SendAddonMessage(message);
+
+    }
+}
+
+void AddonIO::HandleGuildOnlineRequest(Player* player, std::string /*body*/)
+{
+    if (!player)
+        return;
+
+    if (Guild* guild = player->GetGuild())
+    {
+        int online = guild->GetOnlineMembers();
+        int total = guild->GetMemberCount();
+
+        LOG_ERROR("guild", "Sending ASMSG_GUILD_PLAYERS_COUNT: {}:{}", online, total);
+
+        //Outdated sends %d:%d
+        //player->SendAddonMessage("ASMSG_GUILD_PLAYERS_COUNT\t%d:%d", online, total);
+
+        player->SendAddonMessage(fmt::format("ASMSG_GUILD_PLAYERS_COUNT\t{}:{}",
+            guild->GetOnlineMembers(), guild->GetMemberCount()));
+
+    }
+}
+
+void AddonIO::HandleGuildIlvlsRequest(Player* player, std::string /*body*/)
+{
+    if (!player)
+        return;
+
+    if (Guild* guild = player->GetGuild())
+    {
+        std::string response = "ASMSG_GUILD_PLAYERS_ILVL\t";
+        std::unordered_map<uint32, Guild::Member> members = guild->GetMembers();
+        for (const auto& itr : members)
+            response += itr.second.GetName() + ":" + std::to_string(itr.second.GetAverageLvl()) + "|";
+
+            LOG_ERROR("guild", "Sending ASMSG_GUILD_PLAYERS_ILVL: {}", response);
+
+        player->SendAddonMessage(response.c_str());
+    }
+}
+
+void AddonIO::HandleGuildEmblemRequest(Player* player, std::string /*body*/)
+{
+    if (!player)
+        return;
+
+    if (Guild* guild = player->GetGuild())
+    {
+        EmblemInfo emblem = guild->GetEmblemInfo();
+
+        int s = emblem.GetStyle();
+        int c = emblem.GetColor();
+        int bs = emblem.GetBorderStyle();
+        int bc = emblem.GetBorderColor();
+        int bg = emblem.GetBackgroundColor();
+
+        LOG_ERROR("guild", "Sending ASMSG_PLAYER_GUILD_EMBLEM_INFO: {}:{}:{}:{}:{}", s, c, bs, bc, bg);
+
+        //Outdated sends %d:%d:%d:%d:%d
+        //player->SendAddonMessage("ASMSG_PLAYER_GUILD_EMBLEM_INFO\t%d:%d:%d:%d:%d", s, c, bs, bc, bg);
+
+        player->SendAddonMessage(fmt::format("ASMSG_PLAYER_GUILD_EMBLEM_INFO\t{}:{}:{}:{}:{}",
+            emblem.GetStyle(), emblem.GetColor(), emblem.GetBorderStyle(),
+            emblem.GetBorderColor(), emblem.GetBackgroundColor()));
+
+    }
 }

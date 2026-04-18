@@ -20,6 +20,7 @@
 
 #include "AsyncCallbackProcessor.h"
 #include "Common.h"
+#include "Map.h"
 #include "Duration.h"
 #include "ObjectGuid.h"
 #include "QueryHolder.h"
@@ -168,6 +169,7 @@ public:
     virtual void   ResetEventSeasonalQuests(uint16 event_id) = 0;
     [[nodiscard]] virtual std::string const& GetRealmName() const = 0;
     virtual void SetRealmName(std::string name) = 0;
+    [[nodiscard]] virtual uint32 GetXpForNextLevel(uint8 level) = 0;
     virtual SQLQueryHolderCallback& AddQueryHolderCallback(SQLQueryHolderCallback&& callback) = 0;
 
     [[nodiscard]] virtual bool isAreaIdDisabledForAC(uint32 areaId) const = 0;
