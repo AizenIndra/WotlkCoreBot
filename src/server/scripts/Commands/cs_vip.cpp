@@ -61,11 +61,16 @@
          return commandTable;
      }
  
-     static bool HandleVipTimeCommand(ChatHandler* handler)
-     {
+    static bool HandleVipTimeCommand(ChatHandler* handler)
+    {
          Player* player = handler->GetSession()->GetPlayer();
          if (!player)
              return false;
+         if (player->IsHardcore())
+         {
+             handler->SendSysMessage(LANG_VIP_COMMAND_DISABLED);
+             return false;
+         }
          if (!player->IsPremium())
          {
              handler->SendSysMessage(LANG_PLAYER_NOT_VIP);
@@ -83,11 +88,16 @@
          return true;
      }
 
-     static bool CheckVipCommand(ChatHandler* handler, bool configEnabled)
-     {
+    static bool CheckVipCommand(ChatHandler* handler, bool configEnabled)
+    {
          Player* player = handler->GetSession()->GetPlayer();
          if (!player)
              return false;
+         if (player->IsHardcore())
+         {
+             handler->SendSysMessage(LANG_VIP_COMMAND_DISABLED);
+             return false;
+         }
          if (!player->IsPremium())
          {
              handler->SendSysMessage(LANG_PLAYER_NOT_VIP);

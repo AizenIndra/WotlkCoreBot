@@ -718,6 +718,8 @@ bool Player::Create(ObjectGuid::LowType guidlow, CharacterCreateInfo* createInfo
 
     CheckAllAchievementCriteria();
 
+    SetHardcore(createInfo->Hardcore != 0);
+
     return true;
 }
 
@@ -4708,7 +4710,7 @@ void Player::DurabilityPointsLossAll(int32 points, bool inventory)
 
 void Player::DurabilityPointsLoss(Item* item, int32 points)
 {
-    if (HasPreventDurabilityLossAura() || IsPremium())
+    if (HasPreventDurabilityLossAura() || (IsPremium() && !IsHardcore()))
         return;
 
     int32 pMaxDurability = item->GetUInt32Value(ITEM_FIELD_MAXDURABILITY);
@@ -5808,7 +5810,12 @@ void Player::CheckAreaExploreAndOutdoor()
             else
             {
                 int32 diff = int32(GetLevel()) - areaEntry->area_level;
-                float exploreRate = IsPremium() ? sWorld->getRate(RATE_VIP_XP_EXPLORE) : sWorld->getRate(RATE_XP_EXPLORE);
+                float exploreRate = 1.0f;
+                uint32 maxLevel = sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL);
+                if (IsHardcore() && GetLevel() < maxLevel)
+                    exploreRate = sWorld->getRate(RATE_HARDCORE_XP_EXPLORE);
+                else
+                    exploreRate = IsPremium() ? sWorld->getRate(RATE_VIP_XP_EXPLORE) : sWorld->getRate(RATE_XP_EXPLORE);
                 uint32 XP = 0;
                 if (diff < -5)
                 {
@@ -14937,6 +14944,7 @@ void Player::_SaveCharacter(bool create, CharacterDatabaseTransaction trans)
         stmt->SetData(index++, m_grantableLevels);
         stmt->SetData(index++, _innTriggerId);
         stmt->SetData(index++, m_extraBonusTalentCount);
+        stmt->SetData(index++, IsHardcore() ? 1 : 0);
     }
     else
     {
@@ -15077,6 +15085,7 @@ void Player::_SaveCharacter(bool create, CharacterDatabaseTransaction trans)
         stmt->SetData(index++, m_grantableLevels);
         stmt->SetData(index++, _innTriggerId);
         stmt->SetData(index++, m_extraBonusTalentCount);
+        stmt->SetData(index++, IsHardcore() ? 1 : 0);
 
         stmt->SetData(index++, IsInWorld() && !GetSession()->PlayerLogout() ? 1 : 0);
         // Index
@@ -16275,7 +16284,23 @@ uint16 Player::GetMaxSkillValueForLevel() const
 
 float Player::GetQuestRate(bool isDFQuest)
 {
-    float result = IsPremium() ? (isDFQuest ? sWorld->getRate(RATE_VIP_XP_QUEST_DF) : sWorld->getRate(RATE_VIP_XP_QUEST)) : (isDFQuest ? sWorld->getRate(RATE_XP_QUEST_DF) : sWorld->getRate(RATE_XP_QUEST));
+    float result = 1.0f;
+    if (IsHardcore())
+    {
+        uint32 maxLevel = sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL);
+        if (GetLevel() < maxLevel)
+            result = isDFQuest ? sWorld->getRate(RATE_HARDCORE_XP_QUEST_DF) : sWorld->getRate(RATE_HARDCORE_XP_QUEST);
+        else
+            result = isDFQuest ? sWorld->getRate(RATE_VIP_XP_QUEST_DF) : sWorld->getRate(RATE_VIP_XP_QUEST);
+    }
+    else if (IsPremium())
+    {
+        result = isDFQuest ? sWorld->getRate(RATE_VIP_XP_QUEST_DF) : sWorld->getRate(RATE_VIP_XP_QUEST);
+    }
+    else
+    {
+        result = isDFQuest ? sWorld->getRate(RATE_XP_QUEST_DF) : sWorld->getRate(RATE_XP_QUEST);
+    }
 
     sScriptMgr->OnPlayerGetQuestRate(this, result);
 

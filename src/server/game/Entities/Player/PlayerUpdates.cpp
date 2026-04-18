@@ -138,8 +138,8 @@ void Player::Update(uint32 p_time)
         LoginDatabase.Execute(stmt);
     }
 
-    // Remove VIP debuff when player is no longer premium (safety for any sync issues)
-    if (!m_vip)
+    // Remove VIP debuff when player is no longer premium or is hardcore (safety for any sync issues)
+    if (!m_vip || IsHardcore())
     {
         if (uint32 debuffSpell = sWorld->getIntConfig(CONFIG_VIP_DEBUFF_SPELL))
             if (HasAura(debuffSpell))
@@ -152,7 +152,8 @@ void Player::Update(uint32 p_time)
         {
             time_t currentGameTime = GameTime::GetGameTime().count();
             time_t unset = GetPremiumUnsetdate();
-            if (unset <= currentGameTime)
+            // Only expire when unset is set and in the past; avoid treating 0 (uninitialized) as expired
+            if (unset > 0 && unset <= currentGameTime)
             {
                 SetPremiumStatus(false);
                 SetPremiumUnsetdate(0);
@@ -165,6 +166,11 @@ void Player::Update(uint32 p_time)
             else
             {
                 m_premiumTimer = MINUTE * IN_MILLISECONDS; // 60 seconds
+                // Apply VIP debuff when conditions become valid (e.g. left BG, resurrected). Hardcore: no premium aura.
+                if (!IsHardcore() && sWorld->getBoolConfig(CONFIG_VIP_DEBUFF))
+                    if (uint32 spellId = sWorld->getIntConfig(CONFIG_VIP_DEBUFF_SPELL))
+                        if (!InBattleground() && !HasStealthAura() && IsAlive() && !HasAura(spellId))
+                            CastSpell(this, spellId, true);
             }
         }
         else
@@ -802,11 +808,14 @@ bool Player::UpdateGatherSkill(uint32 SkillId, uint32 SkillValue,
               "UpdateGatherSkill(SkillId {} SkillLevel {} RedLevel {})",
               SkillId, SkillValue, RedLevel);
 
-              uint32 gathering_skill_gain = 0;
-              if (IsPremium())
-                  gathering_skill_gain = sWorld->getIntConfig(CONFIG_SKILL_GAIN_GATHERING_VIP);
-              else
-                  gathering_skill_gain = sWorld->getIntConfig(CONFIG_SKILL_GAIN_GATHERING);
+    uint32 gathering_skill_gain = 0;
+    uint32 maxLevel = sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL);
+    if (IsHardcore() && GetLevel() < maxLevel)
+        gathering_skill_gain = sWorld->getIntConfig(CONFIG_SKILL_GAIN_GATHERING_HARDCORE);
+    else if (IsPremium())
+        gathering_skill_gain = sWorld->getIntConfig(CONFIG_SKILL_GAIN_GATHERING_VIP);
+    else
+        gathering_skill_gain = sWorld->getIntConfig(CONFIG_SKILL_GAIN_GATHERING);
     sScriptMgr->OnPlayerUpdateGatheringSkill(this, SkillId, SkillValue, RedLevel + 100, RedLevel + 50, RedLevel + 25, gathering_skill_gain);
 
     // For skinning and Mining chance decrease with level. 1-74 - no decrease,
@@ -884,7 +893,10 @@ bool Player::UpdateCraftSkill(uint32 spellid)
             }
 
             uint32 craft_skill_gain = 0;
-            if (IsPremium())
+            uint32 maxLevel = sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL);
+            if (IsHardcore() && GetLevel() < maxLevel)
+                craft_skill_gain = sWorld->getIntConfig(CONFIG_SKILL_GAIN_CRAFTING_HARDCORE);
+            else if (IsPremium())
                 craft_skill_gain = sWorld->getIntConfig(CONFIG_SKILL_GAIN_CRAFTING_VIP);
             else
                 craft_skill_gain = sWorld->getIntConfig(CONFIG_SKILL_GAIN_CRAFTING);

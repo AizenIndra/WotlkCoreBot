@@ -116,6 +116,13 @@ void WorldSession::HandleSendMail(WorldPacket& recvData)
 
     Player* player = _player;
 
+    // Hardcore: no sending mail
+    if (player->IsHardcore())
+    {
+        player->SendMailResult(0, MAIL_SEND, MAIL_ERR_INTERNAL_ERROR);
+        return;
+    }
+
     if (player->GetLevel() < sWorld->getIntConfig(CONFIG_MAIL_LEVEL_REQ))
     {
         ChatHandler(this).SendNotification(LANG_MAIL_SENDER_REQ, sWorld->getIntConfig(CONFIG_MAIL_LEVEL_REQ));
@@ -493,6 +500,13 @@ void WorldSession::HandleMailTakeItem(WorldPacket& recvData)
 
     Player* player = _player;
 
+    // Hardcore: cannot take items from mail
+    if (player->IsHardcore())
+    {
+        player->SendMailResult(mailId, MAIL_ITEM_TAKEN, MAIL_ERR_INTERNAL_ERROR);
+        return;
+    }
+
     Mail* m = player->GetMail(mailId);
     if (!m || m->state == MAIL_STATE_DELETED || m->deliver_time > GameTime::GetGameTime().count())
     {
@@ -635,6 +649,16 @@ void WorldSession::HandleGetMailList(WorldPacket& recvData)
         return;
 
     Player* player = _player;
+
+    // Hardcore: no mail (return empty list so mailbox is unusable)
+    if (player->IsHardcore())
+    {
+        WorldPacket data(SMSG_MAIL_LIST_RESULT, 8);
+        data << uint32(0);
+        data << uint8(0);
+        SendPacket(&data);
+        return;
+    }
 
     uint8 mailsCount = 0;
     uint32 realCount = 0;

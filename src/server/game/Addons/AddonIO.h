@@ -49,7 +49,11 @@
  
      //Other
      void HandleAverageItemLevelRequest(Player* player, std::string body);
- };
+     
+    // Custom_hardCore
+    void BroadcastHardcoreDeath(std::string const& payload);
+    void HandleHardcoreCreateSet(Player* player, std::string body);
+};
  
  typedef void(AddonIO::*AddonMessageHandler)(Player*, std::string);
  

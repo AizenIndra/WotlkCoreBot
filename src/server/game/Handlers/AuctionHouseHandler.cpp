@@ -58,6 +58,10 @@ void WorldSession::SendAuctionHello(ObjectGuid guid, Creature* unit)
         return;
     }
 
+    // Hardcore: no auction house
+    if (GetPlayer()->IsHardcore())
+        return;
+
     if (!sScriptMgr->CanSendAuctionHello(this, guid, unit))
         return;
 

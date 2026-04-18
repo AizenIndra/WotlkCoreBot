@@ -89,6 +89,13 @@ void WorldSession::HandleGroupInviteOpcode(WorldPacket& recvData)
     if (!sScriptMgr->OnPlayerCanGroupInvite(invitingPlayer, membername))
         return;
 
+    // Hardcore: no group
+    if (invitingPlayer->IsHardcore() || invitedPlayer->IsHardcore())
+    {
+        SendPartyResult(PARTY_OP_INVITE, membername, ERR_INVITE_RESTRICTED);
+        return;
+    }
+
     if (invitingPlayer->IsSpectator() || invitedPlayer->IsSpectator())
     {
         SendPartyResult(PARTY_OP_INVITE, membername, ERR_INVITE_RESTRICTED);
@@ -224,6 +231,13 @@ void WorldSession::HandleGroupAcceptOpcode(WorldPacket& recvData)
 
     // Remove player from invitees in any case
     group->RemoveInvite(GetPlayer());
+
+    // Hardcore: cannot join group
+    if (GetPlayer()->IsHardcore())
+    {
+        SendPartyResult(PARTY_OP_INVITE, "", ERR_INVITE_RESTRICTED);
+        return;
+    }
 
     if (GetPlayer()->IsSpectator())
     {

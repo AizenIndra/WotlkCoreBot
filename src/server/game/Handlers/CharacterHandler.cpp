@@ -275,6 +275,21 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket& recvData)
         >> createInfo->FacialHair
         >> createInfo->OutfitId;
 
+    if (recvData.rpos() < recvData.size())
+        recvData >> createInfo->Hardcore;
+    if (!createInfo->Hardcore && _pendingCharCreateHardcore)
+    {
+        createInfo->Hardcore = true;
+        _pendingCharCreateHardcore = false;
+    }
+
+    // Hardcore Challenge: Death Knights cannot participate
+    if (createInfo->Hardcore && createInfo->Class == CLASS_DEATH_KNIGHT)
+    {
+        SendCharCreate(CHAR_CREATE_DISABLED);
+        return;
+    }
+
     if (AccountMgr::IsPlayerAccount(GetSecurity()))
     {
         if (uint32 mask = sWorld->getIntConfig(CONFIG_CHARACTER_CREATING_DISABLED))
@@ -788,18 +803,21 @@ void WorldSession::LoadPremiumStatusToPlayer(Player* player)
     bool vip = AccountMgr::GetVipStatus(GetAccountId());
     if (vip)
     {
+        // GetVipStatus already verified unsetdate > UNIX_TIMESTAMP() in DB; use same time source
+        // — do not re-check with GameTime to avoid clock skew deleting valid premium on login
         time_t unsetdate = AccountMgr::GetVIPunsetDate(GetAccountId());
-        if (GameTime::GetGameTime().count() > unsetdate)
-        {
-            vip = false;
-            AccountMgr::RemoveVipStatus(GetAccountId());
-            if (uint32 debuffSpell = sWorld->getIntConfig(CONFIG_VIP_DEBUFF_SPELL))
-                player->RemoveAurasDueToSpell(debuffSpell);
-        }
-        else
-            player->SetPremiumUnsetdate(unsetdate);
+        player->SetPremiumUnsetdate(unsetdate);
+        // Apply VIP debuff on every character with premium (same as when buying in store). Hardcore: no premium aura.
+        if (!player->IsHardcore() && sWorld->getBoolConfig(CONFIG_VIP_DEBUFF) && !player->InBattleground() && !player->HasStealthAura() && player->IsAlive())
+            if (uint32 spellId = sWorld->getIntConfig(CONFIG_VIP_DEBUFF_SPELL))
+                player->CastSpell(player, spellId, true);
     }
     else
+    {
+        if (uint32 debuffSpell = sWorld->getIntConfig(CONFIG_VIP_DEBUFF_SPELL))
+            player->RemoveAurasDueToSpell(debuffSpell);
+    }
+    if (player->IsHardcore())
     {
         if (uint32 debuffSpell = sWorld->getIntConfig(CONFIG_VIP_DEBUFF_SPELL))
             player->RemoveAurasDueToSpell(debuffSpell);
@@ -885,6 +903,9 @@ void WorldSession::HandlePlayerLoginFromDB(LoginQueryHolder const& holder)
     SendPacket(&data);
 
     pCurrChar->SendInitialPacketsBeforeAddToMap();
+
+    // Load premium before adding to map so first Update() already has correct status
+    LoadPremiumStatusToPlayer(pCurrChar);
 
     //Show cinematic at the first time that player login
     if (!pCurrChar->getCinematic())
@@ -1069,8 +1090,6 @@ void WorldSession::HandlePlayerLoginFromDB(LoginQueryHolder const& holder)
 
     if (pCurrChar->IsGameMaster())
         ChatHandler(this).SendNotification(LANG_GM_ON);
-
-        LoadPremiumStatusToPlayer(pCurrChar);
 
     std::string IP_str = GetRemoteAddress();
     LOG_INFO("entities.player", "Account: {} (IP: {}) Login Character:[{}] ({}) Level: {}",

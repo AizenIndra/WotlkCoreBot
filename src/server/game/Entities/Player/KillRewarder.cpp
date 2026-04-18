@@ -159,6 +159,9 @@ void KillRewarder::_RewardXP(Player* player, float rate)
                  uint32(xp * rate / 2) + 1;      // Reward only HALF of XP if some of group members are gray.
         else
             xp = 0;
+        // Hardcore: no XP from group kills (solo only)
+        if (player->IsHardcore())
+            xp = 0;
     }
     if (xp)
     {

@@ -25,9 +25,15 @@
  #include "World.h"
  #include <boost/algorithm/string.hpp>
  #include "PreparedStatement.h"
+ #include "WorldSessionMgr.h"
+ #include "DatabaseEnv.h"
+ #include "Log.h"
  
  #define INSPECT_DISTANCE                28.0f
  
+// Протокол баннера смерти хардкора: совпадает с FrameXML (Custom_hardCore), не аддон
+#define ASMSG_HARDCORE_DEATH            "ASMSG_HARDCORE_DEATH"
+
  std::unordered_map<std::string, AddonMessageHandler> addonMessagesTable =
  {
      { "ACMSG_AVERAGE_ITEM_LEVEL_REQUEST",               &AddonIO::HandleAverageItemLevelRequest            },
@@ -44,9 +50,9 @@
      /*{ "ACMSG_SHOP_CATEGORY_NEW_ITEMS_REQUEST",          &AddonIO::HandleShopCategoryNewItemsRequest        },*/
      /*{ "ACMSG_SHOP_SUBSCRIBE",                           &AddonIO::HandleShopSubscribeRequest               },*/
      /*{ "ACMSG_SHOP_PURCHASE_REFUND",                     &AddonIO::HandleShopPurchaseRefundRequest          },*/
-     { "ACMSG_SHOP_COLLECTION_LOAD_REQUEST",             &AddonIO::HandleShopCollectionLoadRequest          },
-     { "ACMSG_SHOP_ITEM_COUNT",                          &AddonIO::HandleShopItemCountRequest               }
- 
+    { "ACMSG_SHOP_COLLECTION_LOAD_REQUEST",             &AddonIO::HandleShopCollectionLoadRequest          },
+    { "ACMSG_SHOP_ITEM_COUNT",                          &AddonIO::HandleShopItemCountRequest               },
+    { "ACMSG_HARDCORE_CREATE_SET",                      &AddonIO::HandleHardcoreCreateSet                  }
  };
  
  /*********SHOPSERVICE*************/
@@ -447,24 +453,85 @@
      return &instance;
  }
  
- void AddonIO::HandleMessage(Player* player, std::string message)
- {
-     if (!player)
-         return;
-     
-     std::vector<std::string> args;
-     boost::split(args, message, boost::is_any_of("\t"));
- 
-     if (args.size() != 2)
-         return;
- 
-     auto itr = addonMessagesTable.find(args[0]);
-     if (itr == addonMessagesTable.end())
-         return;
- 
-     (this->*itr->second)(player, args[1]);
- }
- 
+void AddonIO::HandleMessage(Player* player, std::string message)
+{
+    if (!player)
+        return;
+
+    std::vector<std::string> args;
+    boost::split(args, message, boost::is_any_of("\t"));
+
+    if (args.size() != 2)
+    {
+        LOG_ERROR("HardCore", "AddonIO HandleMessage: expected 'Prefix\\tBody', got {} parts (msg='{}')", args.size(), message);
+        return;
+    }
+
+    auto itr = addonMessagesTable.find(args[0]);
+    if (itr == addonMessagesTable.end())
+        return;
+
+    // Hardcore: магазин полностью недоступен до макс. уровня (80)
+    if (player->IsHardcore() && player->GetLevel() < sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL))
+    {
+        const char* shopPrefixes[] = {
+            "ACMSG_SHOP_BALANCE_REQUEST", "ACMSG_PREMIUM_INFO_REQUEST", "ACMSG_PREMIUM_RENEW_REQUEST",
+            "ACMSG_SHOP_ITEM_LIST_REQUEST", "ACMSG_SHOP_VERSION", "ACMSG_SHOP_BUY_ITEM",
+            "ACMSG_SHOP_SPECIAL_OFFER_LIST_REQUEST", "ACMSG_SHOP_COLLECTION_LOAD_REQUEST", "ACMSG_SHOP_ITEM_COUNT"
+        };
+        for (const char* p : shopPrefixes)
+            if (args[0] == p)
+                return;
+    }
+
+   (this->*itr->second)(player, args[1]);
+}
+
+void AddonIO::HandleHardcoreCreateSet(Player* player, std::string body)
+{
+    LOG_ERROR("HardCore", "ACMSG_HARDCORE_CREATE_SET received: body='{}' player={} guid={} level={}",
+        body, player ? player->GetName() : "nil", player ? player->GetGUID().ToString() : "nil", player ? player->GetLevel() : 0);
+
+    if (!player)
+    {
+        LOG_ERROR("HardCore", "ACMSG_HARDCORE_CREATE_SET rejected: player is null");
+        return;
+    }
+    if (body != "0" && body != "1")
+    {
+        LOG_ERROR("HardCore", "ACMSG_HARDCORE_CREATE_SET rejected: invalid body '{}' (expected '0' or '1')", body);
+        return;
+    }
+    // Принимаем только для персонажей 1 уровня (AT_LOGIN_FIRST сбрасывается до прихода addon-сообщения)
+    if (player->GetLevel() != 1)
+    {
+        LOG_ERROR("HardCore", "ACMSG_HARDCORE_CREATE_SET rejected: player {} level {} (only level 1 accepted)", player->GetName(), player->GetLevel());
+        return;
+    }
+    uint8 hardcore = (body == "1") ? 1 : 0;
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_CHARACTER_HARDCORE);
+    stmt->SetData(0, hardcore);
+    stmt->SetData(1, player->GetGUID().GetCounter());
+    CharacterDatabase.Execute(stmt);
+    player->SetHardcore(hardcore != 0);
+    LOG_ERROR("HardCore", "ACMSG_HARDCORE_CREATE_SET applied: {} hardcore={} (DB updated)", player->GetName(), hardcore);
+}
+
+void AddonIO::BroadcastHardcoreDeath(std::string const& payload)
+{
+	if (payload.empty())
+		return;
+	std::string message = std::string(ASMSG_HARDCORE_DEATH) + "\t" + payload;
+	sWorldSessionMgr->DoForAllOnlinePlayers([&message](Player* receiver)
+	{
+		if (!receiver || !receiver->GetSession())
+			return;
+		WorldPacket data;
+		ChatHandler::BuildChatPacket(data, CHAT_MSG_SYSTEM, LANG_UNIVERSAL, ObjectGuid::Empty, receiver->GetGUID(), message, 0);
+		receiver->GetSession()->SendPacket(&data);
+	});
+}
+
  /*****************************
  ********* HANDLERS ***********
  ******************************/
@@ -786,12 +853,25 @@
 
 void AddonIO::HandlePremiumInfoRequest(Player* player, std::string /*body*/)
 {
-    if (!player)
+    if (!player || !player->GetSession())
         return;
 
+    // Use account DB (same as LoadPremiumStatusToPlayer), not player cache, so the store
+    // shows correct premium state even when the request is handled before or during
+    // character load (e.g. new character, first login).
+    uint32 accountId = player->GetSession()->GetAccountId();
+    bool vip = AccountMgr::GetVipStatus(accountId);
+    time_t unset = AccountMgr::GetVIPunsetDate(accountId);
     time_t now = time(nullptr);
-    time_t unset = player->GetPremiumUnsetdate();
-    uint32 remaining = (player->IsPremium() && unset > now) ? static_cast<uint32>(unset - now) : 0;
+    uint32 remaining = (vip && unset > now) ? static_cast<uint32>(unset - now) : 0;
+
+    // Keep player cache in sync so other code (auras, etc.) sees correct state
+    if (player->IsPremium() != vip || player->GetPremiumUnsetdate() != unset)
+    {
+        player->SetPremiumStatus(vip);
+        player->SetPremiumUnsetdate(vip ? unset : 0);
+    }
+
     player->SendAddonMessage("ASMSG_PREMIUM_INFO_RESPONSE\t{}", remaining);
 }
 

@@ -693,6 +693,15 @@ void WorldConfig::BuildConfigCache()
     SetConfigValue<float>(RATE_VIP_XP_EXPLORE, "Rate.XP.Explore.Premium", 1.0f);
     SetConfigValue<uint32>(CONFIG_SKILL_GAIN_CRAFTING_VIP, "SkillGain.Crafting.Premium", 1);
     SetConfigValue<uint32>(CONFIG_SKILL_GAIN_GATHERING_VIP, "SkillGain.Gathering.Premium", 1);
+    SetConfigValue<uint32>(CONFIG_SKILL_GAIN_CRAFTING_HARDCORE, "SkillGain.Crafting.Hardcore", 1);
+    SetConfigValue<uint32>(CONFIG_SKILL_GAIN_GATHERING_HARDCORE, "SkillGain.Gathering.Hardcore", 1);
+
+    // Rate hardcore
+    SetConfigValue<float>(RATE_HARDCORE_XP_KILL, "Rate.XP.Kill.Hardcore", 1.0f);
+    SetConfigValue<float>(RATE_HARDCORE_XP_QUEST, "Rate.XP.Quest.Hardcore", 1.0f);
+    SetConfigValue<float>(RATE_HARDCORE_XP_QUEST_DF, "Rate.XP.Quest.DF.Hardcore", 1.0f);
+    SetConfigValue<float>(RATE_HARDCORE_XP_EXPLORE, "Rate.XP.Explore.Hardcore", 1.0f);
+    SetConfigValue<float>(RATE_HARDCORE_REPUTATION, "Rate.Reputation.Gain.Hardcore", 1.0f);
 
     // AH Worker threads
     SetConfigValue<uint32>(CONFIG_AUCTIONHOUSE_WORKERTHREADS, "AuctionHouse.WorkerThreads", 1, ConfigValueCache::Reloadable::No, [](uint32 const& value) { return value >= 1; }, ">= 1");
