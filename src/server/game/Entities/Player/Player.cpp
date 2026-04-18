@@ -16587,7 +16587,7 @@ void Player::LoadPvPRank()
     if (GetRankByExp() < 50)
     {
         ChatHandler(GetSession()).PSendSysMessage(
-            "|cffff9933[Система рангов]: У вас %u очков (%u ранг). До следующего ранга: %u.|r",
+            "|cffff9933[Система рангов]: У вас {} очков ({} ранг). До следующего ранга: {}.|r",
             GetRankPoints(), GetRankByExp(), PointsUntilNextRank());
     }
     else
