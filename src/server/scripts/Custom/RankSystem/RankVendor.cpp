@@ -1,5 +1,6 @@
 #include "Player.h"
 #include "ScriptMgr.h"
+#include "ScriptedGossip.h"
 
 namespace
 {
@@ -40,19 +41,24 @@ public:
 
     bool OnGossipHello(Player* player, Creature* creature) override
     {
-        player->PlayerTalkClass->ClearMenus();
+        ClearGossipMenuFor(player);
         uint32 playerRank = static_cast<uint32>(player->GetRankByExp());
+
+        AddGossipItemFor(
+            player,
+            GOSSIP_ICON_CHAT,
+            GetVendorGreeting(
+                player,
+                "Уважаемый игрок. Здесь продавцы ранга 1-10.",
+                "Уважаемый игрок. Здесь доступны продавцы ранга 1-10."),
+            GOSSIP_SENDER_MAIN,
+            0);
 
         AddRankVendorItems(player, 1, 10);
         if (playerRank == 0)
             AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "Вам нужно повысить ранг, чтобы открыть продавца.", GOSSIP_SENDER_MAIN, 0);
 
-        player->PlayerTalkClass->SendGossipMenu(
-            GetVendorGreeting(
-                player,
-                "Уважаемый игрок. Здесь продавцы ранга 1-10.",
-                "Уважаемый игрок. Здесь доступны продавцы ранга 1-10.").c_str(),
-            creature->GetGUID());
+        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
         return true;
     }
 
@@ -76,19 +82,25 @@ public:
 
     bool OnGossipHello(Player* player, Creature* creature) override
     {
-        player->PlayerTalkClass->ClearMenus();
+        ClearGossipMenuFor(player);
         uint32 playerRank = static_cast<uint32>(player->GetRankByExp());
+
+        AddGossipItemFor(
+            player,
+            GOSSIP_ICON_CHAT,
+            GetVendorGreeting(
+                player,
+                "Уважаемый игрок. Здесь продавцы ранга 11-20.",
+                "Уважаемый игрок. Здесь доступны продавцы ранга 11-20."),
+            GOSSIP_SENDER_MAIN,
+            0);
+
         AddRankVendorItems(player, 11, 20);
 
         if (playerRank < 11)
             AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "Требуется минимум 11 ранг.", GOSSIP_SENDER_MAIN, 0);
 
-        player->PlayerTalkClass->SendGossipMenu(
-            GetVendorGreeting(
-                player,
-                "Уважаемый игрок. Здесь продавцы ранга 11-20.",
-                "Уважаемый игрок. Здесь доступны продавцы ранга 11-20.").c_str(),
-            creature->GetGUID());
+        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
         return true;
     }
 
@@ -112,19 +124,25 @@ public:
 
     bool OnGossipHello(Player* player, Creature* creature) override
     {
-        player->PlayerTalkClass->ClearMenus();
+        ClearGossipMenuFor(player);
         uint32 playerRank = static_cast<uint32>(player->GetRankByExp());
+
+        AddGossipItemFor(
+            player,
+            GOSSIP_ICON_CHAT,
+            GetVendorGreeting(
+                player,
+                "Уважаемый игрок. Здесь продавцы ранга 21-30.",
+                "Уважаемый игрок. Здесь доступны продавцы ранга 21-30."),
+            GOSSIP_SENDER_MAIN,
+            0);
+
         AddRankVendorItems(player, 21, 30);
 
         if (playerRank < 21)
             AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "Требуется минимум 21 ранг.", GOSSIP_SENDER_MAIN, 0);
 
-        player->PlayerTalkClass->SendGossipMenu(
-            GetVendorGreeting(
-                player,
-                "Уважаемый игрок. Здесь продавцы ранга 21-30.",
-                "Уважаемый игрок. Здесь доступны продавцы ранга 21-30.").c_str(),
-            creature->GetGUID());
+        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
         return true;
     }
 
@@ -148,19 +166,25 @@ public:
 
     bool OnGossipHello(Player* player, Creature* creature) override
     {
-        player->PlayerTalkClass->ClearMenus();
+        ClearGossipMenuFor(player);
         uint32 playerRank = static_cast<uint32>(player->GetRankByExp());
+
+        AddGossipItemFor(
+            player,
+            GOSSIP_ICON_CHAT,
+            GetVendorGreeting(
+                player,
+                "Уважаемый игрок. Здесь продавцы ранга 31-40.",
+                "Уважаемый игрок. Здесь доступны продавцы ранга 31-40."),
+            GOSSIP_SENDER_MAIN,
+            0);
+
         AddRankVendorItems(player, 31, 40);
 
         if (playerRank < 31)
             AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "Требуется минимум 31 ранг.", GOSSIP_SENDER_MAIN, 0);
 
-        player->PlayerTalkClass->SendGossipMenu(
-            GetVendorGreeting(
-                player,
-                "Уважаемый игрок. Здесь продавцы ранга 31-40.",
-                "Уважаемый игрок. Здесь доступны продавцы ранга 31-40.").c_str(),
-            creature->GetGUID());
+        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
         return true;
     }
 
@@ -184,19 +208,25 @@ public:
 
     bool OnGossipHello(Player* player, Creature* creature) override
     {
-        player->PlayerTalkClass->ClearMenus();
+        ClearGossipMenuFor(player);
         uint32 playerRank = static_cast<uint32>(player->GetRankByExp());
+
+        AddGossipItemFor(
+            player,
+            GOSSIP_ICON_CHAT,
+            GetVendorGreeting(
+                player,
+                "Уважаемый игрок. Здесь продавцы ранга 41-50.",
+                "Уважаемый игрок. Здесь доступны продавцы ранга 41-50."),
+            GOSSIP_SENDER_MAIN,
+            0);
+
         AddRankVendorItems(player, 41, 50);
 
         if (playerRank < 41)
             AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "Требуется минимум 41 ранг.", GOSSIP_SENDER_MAIN, 0);
 
-        player->PlayerTalkClass->SendGossipMenu(
-            GetVendorGreeting(
-                player,
-                "Уважаемый игрок. Здесь продавцы ранга 41-50.",
-                "Уважаемый игрок. Здесь доступны продавцы ранга 41-50.").c_str(),
-            creature->GetGUID());
+        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
         return true;
     }
 
@@ -220,7 +250,7 @@ public:
 
     bool OnGossipHello(Player* player, Creature* creature) override
     {
-        player->PlayerTalkClass->ClearMenus();
+        ClearGossipMenuFor(player);
 
         std::ostringstream text;
         if (player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU)
@@ -236,6 +266,8 @@ public:
                  << "До следующего ранга: " << player->PointsUntilNextRank() << " опыта";
         }
 
+        AddGossipItemFor(player, GOSSIP_ICON_CHAT, text.str(), GOSSIP_SENDER_MAIN, 0);
+
         AddGossipItemFor(
             player,
             GOSSIP_ICON_BATTLE,
@@ -243,7 +275,7 @@ public:
             GOSSIP_SENDER_MAIN,
             1);
 
-        player->PlayerTalkClass->SendGossipMenu(text.str().c_str(), creature->GetGUID());
+        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
         return true;
     }
 

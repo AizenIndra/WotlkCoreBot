@@ -832,7 +832,6 @@ public:
 
     [[nodiscard]] bool ModifyBankMoney(CharacterDatabaseTransaction trans, const uint64& amount, bool add) { return _ModifyBankMoney(trans, amount, add); }
     [[nodiscard]] uint32 GetMemberSize() const { return m_members.size(); }
-    uint32 GetRankRights(uint8 rankId) const { return _GetRankRights(rankId); }
 
     bool MemberHasTabRights(ObjectGuid guid, uint8 tabId, uint32 rights) const;
     bool HasRankRight(Player* player, uint32 right) const;
