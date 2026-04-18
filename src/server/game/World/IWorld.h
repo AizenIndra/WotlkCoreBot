@@ -65,8 +65,10 @@ enum ServerMessageType
  
 struct PlayerDonate
 {
-    uint32 balance;
-    uint32 vote;
+    uint32 balance = 0;
+    uint32 vote = 0;
+    uint32 loyaltyLevel = 0;
+    uint32 loyaltyPoints = 0;
 };
 
 struct StoreItemData
@@ -81,6 +83,20 @@ struct StoreItemData
     uint8 CategoryID;
     uint8 SubCategoryID;
     uint8 MoneyID;
+};
+
+struct LuckyWheelRewardData
+{
+    uint32 id;
+    uint32 rewardType;      // 0=Gold, 1=Item, 2=Currency
+    uint32 rewardValue;     // Item ID for items, Currency ID for currency, 0 for gold
+    uint32 rewardCount;     // Amount of reward
+    float chance;            // Drop chance percentage
+    std::string name;       // Display name
+    std::string icon;       // Icon name
+    uint32 color;           // Rarity color
+    bool enabled;           // Is reward enabled
+    uint32 order;           // Display order
 };
 
 struct StoreSpecialOfferData
@@ -185,6 +201,10 @@ public:
         return specialofferdetails_map;
     }
     std::map<int32, CollectionMountData> GetStorCollection() { return collection_map; }
+
+    // Lucky Wheel Rewards
+    void LoadLuckyWheelRewards();
+    std::vector<LuckyWheelRewardData> GetLuckyWheelRewards() { return luckywheel_rewards; }
     uint32 GetShopVersion() { return m_version; }
     uint32 m_shopUpdate;
 
@@ -195,6 +215,9 @@ public:
     std::map<int32, StoreSpecialOfferData> specialoffer_map;
     std::multimap<int32, StoreSpecialOfferDetailsData> specialofferdetails_map;
     std::map<int32, CollectionMountData> collection_map;
+
+    // Lucky Wheel Rewards
+    std::vector<LuckyWheelRewardData> luckywheel_rewards;
 
     PlayerDonateMap player_donate;
 };

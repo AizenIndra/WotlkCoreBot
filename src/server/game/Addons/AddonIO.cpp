@@ -16,6 +16,7 @@
  */
 
  #include "AddonIO.h"
+ #include "BattlePassService.h"
  #include "AccountMgr.h"
  #include "StringFormat.h"
  #include "Guild.h"
@@ -29,8 +30,11 @@
  #include "WorldSessionMgr.h"
  #include "DatabaseEnv.h"
  #include "Log.h"
+ #include "Item.h"
+ #include "WorldSession.h"
  #include <sstream>
  #include <vector>
+ #include <ctime>
  
  #define INSPECT_DISTANCE                28.0f
  
@@ -66,6 +70,12 @@
 
     { "ACMSG_PROMOCODE_REWARD",                          &AddonIO::HandlePromoCodeRewardRequest             },
     { "ACMSG_PROMOCODE_SUBMIT",                          &AddonIO::HandlePromoCodeSubmitRequest             },
+    { "ACMSG_BATTLEPASS_GET",                            &AddonIO::HandleBattlePassGetRequest               },
+    { "ACMSG_BATTLEPASS_POST",                           &AddonIO::HandleBattlePassPostRequest               },
+    { "ACMSG_ONLINEREWARD_GET",                          &AddonIO::HandleOnlineRewardGetRequest             },
+    { "ACMSG_ONLINEREWARD_POST",                         &AddonIO::HandleOnlineRewardPostRequest            },
+    { "AC_CU_GET",                                       &AddonIO::HandleCustomGet                          },
+    { "AC_CU_POST",                                      &AddonIO::HandleCustomPost                         },
  };
  
  /*********SHOPSERVICE*************/
@@ -555,7 +565,90 @@ void AddonIO::BroadcastHardcoreDeath(std::string const& payload)
  /*****************************
  ********* HANDLERS ***********
  ******************************/
- 
+
+namespace
+{
+uint32 GetAccountLoyaltyLevel(uint32 accountId)
+{
+    LoginDatabasePreparedStatement* stmt =
+        LoginDatabase.GetPreparedStatement(LOGIN_SEL_SHOP_LOYALTY_LEVEL);
+    stmt->SetData(0, accountId);
+    PreparedQueryResult result = LoginDatabase.Query(stmt);
+
+    if (!result)
+        return 0;
+
+    Field* fields = result->Fetch();
+    return fields[0].Get<uint32>();
+}
+
+uint32 GetAccountLoyaltyPoints(uint32 accountId)
+{
+    LoginDatabasePreparedStatement* stmt =
+        LoginDatabase.GetPreparedStatement(LOGIN_SEL_SHOP_LOYALTY_POINTS);
+    stmt->SetData(0, accountId);
+    PreparedQueryResult result = LoginDatabase.Query(stmt);
+
+    if (!result)
+        return 0;
+
+    Field* fields = result->Fetch();
+    return fields[0].Get<uint32>();
+}
+
+uint32 CalculateLoyaltyLevelFromPoints(uint32 points)
+{
+    QueryResult result = LoginDatabase.Query(
+        "SELECT COALESCE(MAX(`level`), 0) FROM custom_store_loyalty_level WHERE required_points <= {}",
+        points);
+
+    if (!result)
+        return 0;
+
+    Field* fields = result->Fetch();
+    return fields[0].Get<uint32>();
+}
+
+uint32 SyncAccountLoyaltyLevel(uint32 accountId)
+{
+    uint32 points = GetAccountLoyaltyPoints(accountId);
+    uint32 level = CalculateLoyaltyLevelFromPoints(points);
+    uint32 currentLevel = GetAccountLoyaltyLevel(accountId);
+
+    if (currentLevel != level)
+    {
+        LoginDatabasePreparedStatement* stmt =
+            LoginDatabase.GetPreparedStatement(LOGIN_UPD_STORE_LOYALTY);
+        stmt->SetData(0, level);
+        stmt->SetData(1, accountId);
+        LoginDatabase.Execute(stmt);
+    }
+
+    return level;
+}
+
+uint32 ParseOpcodeFromBody(std::string const& body)
+{
+    try
+    {
+        std::vector<std::string> parts;
+        boost::split(parts, body, boost::is_any_of("|"));
+        if (!parts.empty())
+            return std::stoul(parts[0]);
+    }
+    catch (...)
+    {
+    }
+
+    return 0;
+}
+
+constexpr uint32 ONLINE_REWARD_REQUIRED_TIME = 10;
+constexpr uint32 LUCKY_WHEEL_OPCODE_GET_STATE = 20;
+constexpr uint32 LUCKY_WHEEL_OPCODE_GET_REWARDS = 21;
+constexpr uint32 LUCKY_WHEEL_OPCODE_SPIN = 22;
+} // namespace
+
  void AddonIO::HandleAverageItemLevelRequest(Player* player, std::string body)
  {
      if (!player)
@@ -671,7 +764,10 @@ void AddonIO::HandleGuildGetReputationReward(Player* player, std::string body)
  
      auto sess = player->GetSession();
  
-     player->SendAddonMessage("ASMSG_SHOP_BALANCE_RESPONSE\t{}:{}:{}:{}:{}:{}:{}", sess->GetAccountBalance(), sess->GetAccountVote(), 0, 0, 0, 0, 0);
+    uint32 loyaltyLevel = SyncAccountLoyaltyLevel(sess->GetAccountId());
+
+    player->SendAddonMessage("ASMSG_SHOP_BALANCE_RESPONSE\t{}:{}:{}:{}:{}:{}:{}",
+        sess->GetAccountBalance(), sess->GetAccountVote(), loyaltyLevel, 0, 0, 0, 0);
  }
  
  void AddonIO::HandleShopItemListRequest(Player* player, std::string body)
@@ -739,7 +835,7 @@ void AddonIO::HandleGuildGetReputationReward(Player* player, std::string body)
      auto sess = player->GetSession();
  
      uint8 p_resp = 1;
-     uint32 item = 0, cost = 0, count = 1, db_count = 1, moneyID = 1, f_cost = 0, atLoginFlag = 0;
+    uint32 item = 0, cost = 0, requiredLevel = 0, count = 1, db_count = 1, moneyID = 1, f_cost = 0, atLoginFlag = 0;
      int32 balance = 0;
  
      try
@@ -756,7 +852,8 @@ void AddonIO::HandleGuildGetReputationReward(Player* player, std::string body)
                      if (it->first == std::stoi(par[0]))
                      {
                          item = it->second.itemEntry;
-                         cost = it->second.discountPrice;
+                        cost = it->second.discountPrice;
+                        requiredLevel = it->second.price;
                          db_count = it->second.count;
                          moneyID = it->second.MoneyID;
                          if (par.size() != 2)
@@ -765,10 +862,14 @@ void AddonIO::HandleGuildGetReputationReward(Player* player, std::string body)
                      }
              }
  
-             if (moneyID == 1)
+            if (moneyID == 1)
                  balance = sess->GetAccountBalance();
-             else
+            else if (moneyID == 2)
                  balance = sess->GetAccountVote();
+            else if (moneyID == 3)
+                balance = 2147483647;
+            else
+                balance = 0;
  
              if (db_count > 1 && db_count != count)
                  count = db_count;
@@ -810,9 +911,20 @@ void AddonIO::HandleGuildGetReputationReward(Player* player, std::string body)
                          case PAID_SERVICE_LEVELUP:
                              p_resp = ShopPaidService(player, item, count, moneyID, f_cost, false);
                              break;
-                         default:
-                             p_resp = ShopAddItem(player, player, item, count, moneyID, f_cost);
-                             break;
+                        default:
+                        {
+                            if (moneyID == 3)
+                            {
+                                uint32 accountLoyaltyLevel = SyncAccountLoyaltyLevel(sess->GetAccountId());
+                                if (accountLoyaltyLevel < requiredLevel)
+                                    p_resp = 1;
+                                else
+                                    p_resp = ShopAddItem(player, player, item, count, 10, 0);
+                            }
+                            else
+                                p_resp = ShopAddItem(player, player, item, count, moneyID, f_cost);
+                            break;
+                        }
                          }
  
                          break;
@@ -865,7 +977,16 @@ void AddonIO::HandleGuildGetReputationReward(Player* player, std::string body)
                                  break;
                              }
  
-                             p_resp = ShopAddItem(player, target, item, count, moneyID, f_cost, par[5].c_str());
+                            if (moneyID == 3)
+                            {
+                                uint32 accountLoyaltyLevel = SyncAccountLoyaltyLevel(sess->GetAccountId());
+                                if (accountLoyaltyLevel < requiredLevel)
+                                    p_resp = 1;
+                                else
+                                    p_resp = ShopAddItem(player, target, item, count, 10, 0, par[5].c_str());
+                            }
+                            else
+                                p_resp = ShopAddItem(player, target, item, count, moneyID, f_cost, par[5].c_str());
  
                              break;
                          }
@@ -1374,5 +1495,279 @@ void AddonIO::HandlePromoCodeSubmitRequest(Player* player, std::string body)
         }
 
         player->SendAddonMessage(fmt::format("ASMSG_PROMOCODE_SUBMIT\t{}", errorId));
+    }
+}
+
+void AddonIO::HandleCustomGet(Player* player, std::string body)
+{
+    // Backward compatibility transport:
+    // LuckyWheel uses opcodes 20/21 on AC_CU_GET, BattlePass uses its own opcode space.
+    uint32 opcode = ParseOpcodeFromBody(body);
+
+    if (opcode == 20 || opcode == 21)
+    {
+        HandleLuckyWheelGetState(player, body);
+        return;
+    }
+
+    BattlePassService::HandleGet(player, body);
+}
+
+void AddonIO::HandleCustomPost(Player* player, std::string body)
+{
+    // Backward compatibility transport:
+    // LuckyWheel uses opcode 22 on AC_CU_POST.
+    uint32 opcode = ParseOpcodeFromBody(body);
+
+    if (opcode == 22)
+    {
+        HandleLuckyWheelSpin(player, body);
+        return;
+    }
+
+    BattlePassService::HandlePost(player, body);
+}
+
+void AddonIO::HandleBattlePassGetRequest(Player* player, std::string body)
+{
+    BattlePassService::HandleGet(player, body);
+}
+
+void AddonIO::HandleBattlePassPostRequest(Player* player, std::string body)
+{
+    BattlePassService::HandlePost(player, body);
+}
+
+void AddonIO::HandleOnlineRewardGetRequest(Player* player, std::string body)
+{
+    if (!player)
+        return;
+
+    uint32 opcode = ParseOpcodeFromBody(body);
+    if (opcode == LUCKY_WHEEL_OPCODE_GET_STATE)
+        HandleLuckyWheelStateRequest(player);
+    else if (opcode == LUCKY_WHEEL_OPCODE_GET_REWARDS)
+        HandleLuckyWheelRewardsRequest(player);
+}
+
+void AddonIO::HandleOnlineRewardPostRequest(Player* player, std::string body)
+{
+    if (!player)
+        return;
+
+    uint32 opcode = ParseOpcodeFromBody(body);
+    if (opcode == LUCKY_WHEEL_OPCODE_SPIN)
+        HandleLuckyWheelSpinRequest(player);
+}
+
+// ============================================================================
+// LuckyWheel Handlers
+// ============================================================================
+
+void AddonIO::HandleLuckyWheelGetState(Player* player, std::string body)
+{
+    // Legacy bridge: redirect old transport to new online reward GET.
+    HandleOnlineRewardGetRequest(player, body);
+}
+
+void AddonIO::HandleLuckyWheelSpin(Player* player, std::string body)
+{
+    // Legacy bridge: redirect old transport to new online reward POST.
+    HandleOnlineRewardPostRequest(player, body);
+}
+
+void AddonIO::HandleLuckyWheelStateRequest(Player* player)
+{
+    if (!player)
+        return;
+
+    uint32 totalOnlineTime = player->GetSession()->GetTotalOnlineTime();
+    uint32 lastRewardTime = player->GetSession()->GetLastRewardTime();
+    // Check if player has enough online time
+    bool isAvailable = (totalOnlineTime >= ONLINE_REWARD_REQUIRED_TIME);
+    
+    // Get total spins from database
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_ONLINE_REWARDS);
+    stmt->SetData(0, player->GetGUID().GetCounter());
+    PreparedQueryResult result = CharacterDatabase.Query(stmt);
+    
+    uint32 totalSpins = 0;
+    if (result)
+    {
+        // We can get total_rewards_claimed from a separate query if needed
+        // For now, we'll use 0
+    }
+
+    // Format: available,accumulatedTime,requiredTime,totalSpins,lastSpinTime|rewardCount
+    // rewardCount will be sent separately in rewards response
+    std::string response = Acore::StringFormat("ASMSG_LUCKY_WHEEL_STATE\t{},{},{},{},{}|0",
+        isAvailable ? 1 : 0,
+        totalOnlineTime,
+        ONLINE_REWARD_REQUIRED_TIME,
+        totalSpins,
+        lastRewardTime);
+
+    player->SendAddonMessage(response);
+}
+
+void AddonIO::HandleLuckyWheelRewardsRequest(Player* player)
+{
+    if (!player)
+        return;
+
+    // Загружаем награды из базы данных
+    std::vector<LuckyWheelRewardData> rewards = sWorld->GetLuckyWheelRewards();
+
+    // Если наград нет в базе, используем дефолтные (fallback)
+    if (rewards.empty())
+    {
+        LOG_WARN("shop", "HandleLuckyWheelRewardsRequest: No rewards in database, using default rewards");
+        // Можно оставить пустым или добавить дефолтные награды здесь
+    }
+
+    // Format: id,type,value,count,chance,name,icon,color|id,type,...
+    std::ostringstream response;
+    response << "ASMSG_LUCKY_WHEEL_REWARDS\t";
+    
+    for (size_t i = 0; i < rewards.size(); ++i)
+    {
+        const LuckyWheelRewardData& r = rewards[i];
+        response << r.id << "," << r.rewardType << "," << r.rewardValue << "," << r.rewardCount << ","
+                 << r.chance << "," << r.name << "," << r.icon << "," << r.color;
+        
+        if (i < rewards.size() - 1)
+            response << "|";
+    }
+
+    player->SendAddonMessage(response.str());
+}
+
+void AddonIO::HandleLuckyWheelSpinRequest(Player* player)
+{
+    if (!player)
+        return;
+
+    // Check if player has enough online time
+    uint32 totalOnlineTime = player->GetSession()->GetTotalOnlineTime();
+    
+    if (totalOnlineTime < ONLINE_REWARD_REQUIRED_TIME)
+    {
+        // Send failure response
+        player->SendAddonMessage("ASMSG_LUCKY_WHEEL_SPIN_RESULT\t0|0|0|0|0|Недостаточно времени онлайн|INV_Misc_QuestionMark|1");
+        return;
+    }
+
+    // Загружаем награды из базы данных
+    std::vector<LuckyWheelRewardData> rewards = sWorld->GetLuckyWheelRewards();
+
+    if (rewards.empty())
+    {
+        LOG_WARN("shop", "HandleLuckyWheelSpinRequest: No rewards in database");
+        player->SendAddonMessage("ASMSG_LUCKY_WHEEL_SPIN_RESULT\t0|0|0|0|0|Нет доступных наград|INV_Misc_QuestionMark|1");
+        return;
+    }
+
+    // Calculate total chance
+    float totalChance = 0.0f;
+    for (const LuckyWheelRewardData& r : rewards)
+        totalChance += r.chance;
+
+    // Roll random reward based on chances
+    float roll = frand(0.0f, totalChance);
+    float currentChance = 0.0f;
+    const LuckyWheelRewardData* selectedReward = nullptr;
+
+    for (const LuckyWheelRewardData& r : rewards)
+    {
+        currentChance += r.chance;
+        if (roll <= currentChance)
+        {
+            selectedReward = &r;
+            break;
+        }
+    }
+
+    if (!selectedReward)
+        selectedReward = &rewards[0]; // Fallback to first reward
+
+    // Give reward to player
+    bool rewardGiven = false;
+    if (selectedReward->rewardType == 0) // Gold
+    {
+        // Золото добавляется напрямую в инвентарь игрока
+        player->ModifyMoney(selectedReward->rewardCount);
+        rewardGiven = true;
+    }
+    else if (selectedReward->rewardType == 1) // Item
+    {
+        // Предметы: сначала пытаемся добавить в инвентарь, если места нет - отправляем на почту
+        uint32 noSpaceForCount = 0;
+        ItemPosCountVec dest;
+        InventoryResult msg = player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, selectedReward->rewardValue, selectedReward->rewardCount, &noSpaceForCount);
+        
+        uint32 itemsToGive = selectedReward->rewardCount;
+        if (msg != EQUIP_ERR_OK)
+            itemsToGive -= noSpaceForCount;
+
+        // Добавляем предметы, которые помещаются в инвентарь
+        if (itemsToGive > 0)
+        {
+            if (Item* item = player->StoreNewItem(dest, selectedReward->rewardValue, true))
+            {
+                player->SendNewItem(item, itemsToGive, false, true);
+                rewardGiven = true;
+            }
+        }
+
+        // Если часть предметов не поместилась, отправляем на почту
+        if (noSpaceForCount > 0)
+        {
+            ShopSendItem(player, player, "Награда за онлайн время", selectedReward->rewardValue, noSpaceForCount);
+            rewardGiven = true;
+        }
+    }
+    else if (selectedReward->rewardType == 2) // Currency
+    {
+        // Валюта добавляется на аккаунт (бонусная валюта)
+        if (selectedReward->rewardValue == 1) // Bonus currency
+        {
+            // Используем AddDonateBonusOrVote для добавления валюты (не SetAccountCurrency, который вычитает!)
+            if (player->GetSession()->AddDonateBonusOrVote(selectedReward->rewardCount, 1, false))
+            {
+                rewardGiven = true;
+            }
+        }
+    }
+
+    if (rewardGiven)
+    {
+        // Reset online time and update last reward time
+        uint32 currentTime = time(nullptr);
+        player->GetSession()->ResetOnlineTime();
+        player->GetSession()->SetLastRewardTime(currentTime);
+
+        // Update database
+        CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ONLINE_REWARDS_REWARD);
+        stmt->SetData(0, currentTime);
+        stmt->SetData(1, player->GetGUID().GetCounter());
+        CharacterDatabase.Execute(stmt);
+
+        // Send success response
+        // Format: success|rewardId|rewardType|rewardValue|rewardCount|rewardName|rewardIcon|rewardColor
+        std::string response = Acore::StringFormat("ASMSG_LUCKY_WHEEL_SPIN_RESULT\t1|{}|{}|{}|{}|{}|{}|{}",
+            selectedReward->id,
+            selectedReward->rewardType,
+            selectedReward->rewardValue,
+            selectedReward->rewardCount,
+            selectedReward->name,
+            selectedReward->icon,
+            selectedReward->color);
+
+        player->SendAddonMessage(response);
+    }
+    else
+    {
+        // Send failure response
+        player->SendAddonMessage("ASMSG_LUCKY_WHEEL_SPIN_RESULT\t0|0|0|0|0|Ошибка выдачи награды|INV_Misc_QuestionMark|1");
     }
 }

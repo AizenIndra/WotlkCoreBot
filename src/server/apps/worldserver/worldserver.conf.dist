@@ -812,6 +812,8 @@ Logger.playerbots=5,Console Playerbots
 Logger.network=4,Console Server
 # Логи хардкора (AddonIO ACMSG_HARDCORE_CREATE_SET и т.д.)
 Logger.HardCore=2,Console Server
+# Логи BattlePass (AddonIO AC_CU_GET/POST и ответы)
+Logger.battlepass=4,Console Server
 #Logger.outdoorpvp=4,Console Server
 #Logger.pool=4,Console Server
 #Logger.rbac=4,Console Server

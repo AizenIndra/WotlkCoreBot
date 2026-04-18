@@ -1581,6 +1581,8 @@ void WorldSession::LoadAccountStore(PlayerDonate data)
 {
     m_balance = data.balance;
     m_vote = data.vote;
+    m_loyaltyLevel = data.loyaltyLevel;
+    m_loyaltyPoints = data.loyaltyPoints;
 }
 
 bool WorldSession::SetAccountCurrency(int32 currency, uint8 moneyid, bool isProfession)

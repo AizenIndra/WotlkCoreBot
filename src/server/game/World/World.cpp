@@ -327,6 +327,7 @@ void World::LoadConfigSettings(bool reload)
     sScriptMgr->OnAfterConfigLoad(reload);
 
     LoadShop();
+    LoadLuckyWheelRewards();
 }
 
 /// Initialize the World
@@ -1987,7 +1988,7 @@ CliCommandHolder::~CliCommandHolder()
 
 void IWorld::LoadDonateCurrency()
 {
-    if (auto result = LoginDatabase.Query("SELECT id, bonuses, votes from account_donate"))
+    if (auto result = LoginDatabase.Query("SELECT id, bonuses, votes, loyalty_level, loyalty_points from account_donate"))
     {
         player_donate.clear();
 
@@ -1999,6 +2000,8 @@ void IWorld::LoadDonateCurrency()
             AccountID = fields[0].Get<uint32>();
             data.balance = fields[1].Get<uint32>();
             data.vote = fields[2].Get<uint32>();
+            data.loyaltyLevel = fields[3].Get<uint32>();
+            data.loyaltyPoints = fields[4].Get<uint32>();
 
             player_donate.insert(std::pair<uint32, PlayerDonate>(AccountID, data));
 
@@ -2112,5 +2115,37 @@ void IWorld::LoadShop()
 
             collection_map = mountMap;
         }
+    }
+}
+
+void IWorld::LoadLuckyWheelRewards()
+{
+    luckywheel_rewards.clear();
+
+    if (auto result = CharacterDatabase.Query("SELECT id, reward_type, reward_value, reward_count, chance, name, icon, color, enabled, `order` FROM lucky_wheel_rewards WHERE enabled = 1 ORDER BY `order` ASC, id ASC"))
+    {
+        do
+        {
+            auto fields = result->Fetch();
+            LuckyWheelRewardData reward;
+            reward.id = fields[0].Get<uint32>();
+            reward.rewardType = fields[1].Get<uint8>();
+            reward.rewardValue = fields[2].Get<uint32>();
+            reward.rewardCount = fields[3].Get<uint32>();
+            reward.chance = fields[4].Get<float>();
+            reward.name = fields[5].Get<std::string>();
+            reward.icon = fields[6].Get<std::string>();
+            reward.color = fields[7].Get<uint8>();
+            reward.enabled = fields[8].Get<uint8>() == 1;
+            reward.order = fields[9].Get<uint32>();
+
+            luckywheel_rewards.push_back(reward);
+        } while (result->NextRow());
+
+        LOG_INFO("server.loading", ">> Loaded {} Lucky Wheel rewards", luckywheel_rewards.size());
+    }
+    else
+    {
+        LOG_WARN("server.loading", ">> No Lucky Wheel rewards found in database. Using default rewards.");
     }
 }

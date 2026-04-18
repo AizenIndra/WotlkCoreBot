@@ -160,11 +160,13 @@ void LoginDatabaseConnection::DoPrepareStatements()
     //Store
     PrepareStatement(LOGIN_UPD_STORE_BALANCE, "UPDATE account_donate SET bonuses = ? WHERE id = ?", CONNECTION_BOTH);
     PrepareStatement(LOGIN_UPD_STORE_VOTE, "UPDATE account_donate SET votes = ? WHERE id = ?", CONNECTION_BOTH);
-    PrepareStatement(LOGIN_UPD_STORE_LOYALTY, "UPDATE account_donate SET total_bonuses = ? WHERE id = ?", CONNECTION_BOTH);
+    PrepareStatement(LOGIN_UPD_STORE_LOYALTY, "UPDATE account_donate SET loyalty_level = ? WHERE id = ?", CONNECTION_BOTH);
     PrepareStatement(LOGIN_SEL_SHOP_BONUS, "SELECT bonuses FROM account_donate WHERE id = ?", CONNECTION_SYNCH);
     PrepareStatement(LOGIN_SEL_SHOP_VOTE, "SELECT votes FROM account_donate WHERE id = ?", CONNECTION_SYNCH);
+    PrepareStatement(LOGIN_SEL_SHOP_LOYALTY_LEVEL, "SELECT loyalty_level FROM account_donate WHERE id = ?", CONNECTION_SYNCH);
+    PrepareStatement(LOGIN_SEL_SHOP_LOYALTY_POINTS, "SELECT loyalty_points FROM account_donate WHERE id = ?", CONNECTION_SYNCH);
     PrepareStatement(LOGIN_INS_STORE_LOGS, "INSERT INTO custom_store_logs (character_ID, character_name, account_ID, serviceName, itemID, itemCount, totalPrice, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
-    PrepareStatement(LOGIN_INSERT_STORE_BALANCE, "INSERT INTO account_donate VALUES (?, ?, ?, ?, ?)", CONNECTION_ASYNC);
+    PrepareStatement(LOGIN_INSERT_STORE_BALANCE, "INSERT INTO account_donate (id, bonuses, votes, total_bonuses, total_votes) VALUES (?, ?, ?, ?, ?)", CONNECTION_ASYNC);
     
     // Premium
     PrepareStatement(LOGIN_SEL_IS_PREMIUM, "SELECT active FROM account_premium WHERE id = ?", CONNECTION_SYNCH);

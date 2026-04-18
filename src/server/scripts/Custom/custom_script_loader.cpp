@@ -19,6 +19,8 @@
 void AddSC_mod_hardcore();
 void AddSC_Login_script();
 void AddSC_NPC_RANK_VENDOR();
+void AddSC_OnlineRewardsPlayer();
+void AddSC_BattlePassProgressScripts();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
@@ -27,4 +29,6 @@ void AddCustomScripts()
     AddSC_mod_hardcore();
     AddSC_Login_script();
     AddSC_NPC_RANK_VENDOR();
+    AddSC_OnlineRewardsPlayer();
+    AddSC_BattlePassProgressScripts();
 }
