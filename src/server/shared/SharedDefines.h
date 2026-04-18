@@ -76,46 +76,64 @@ enum Races
     RACE_TAUREN             = 6,  // TITLE Tauren
     RACE_GNOME              = 7,  // TITLE Gnome
     RACE_TROLL              = 8,  // TITLE Troll
-    //RACE_GOBLIN             = 9,
+    RACE_GOBLIN             = 9,  // TITLE Goblin
     RACE_BLOODELF           = 10, // TITLE Blood Elf
-    RACE_DRAENEI            = 11 //, TITLE Draenei
-    //RACE_FEL_ORC        = 12,
-    //RACE_NAGA           = 13,
-    //RACE_BROKEN         = 14,
-    //RACE_SKELETON       = 15,
-    //RACE_VRYKUL         = 16,
-    //RACE_TUSKARR        = 17,
-    //RACE_FOREST_TROLL   = 18,
-    //RACE_TAUNKA         = 19,
-    //RACE_NORTHREND_SKELETON = 20,
-    //RACE_ICE_TROLL      = 21
+    RACE_DRAENEI            = 11, //, TITLE Draenei
+    RACE_WORGEN             = 12, // TITLE Worgen
+    RACE_NIGHTBORNE         = 13, // TITLE Nightborne
+    RACE_VOIDELF            = 14, // TITLE Void Elf
+    RACE_EREDAR             = 15, // TITLE Eredar
+    RACE_LIGHTFORGED        = 16, // TITLE Lightforged Draenei
+    RACE_ZANDALARI          = 17, // TITLE Zandalari Troll
+    RACE_VULPERA            = 18, // TITLE Vulpera
+    RACE_PANDAREN_ALLIANCE  = 19, // TITLE Pandaren (Alliance)
+    RACE_PANDAREN_HORDE     = 20, // TITLE Pandaren (Horde)
+    RACE_DARKIRONDWARF      = 21, // TITLE Dark Iron Dwarf
+    RACE_DEMONHUNTER_HORDE  = 22, // TITLE Demon Hunter (Horde)
+    RACE_KULTIRAN           = 23, // TITLE Kul Tiran
+    RACE_DEMONHUNTER_ALLIANCE = 24, // TITLE Demon Hunter (Alliance)
+    RACE_DRACTHYR_HORDE       = 25, // TITLE Dracthyr (Horde)
+    RACE_DRACTHYR_ALLIANCE    = 26, // TITLE Dracthyr (Alliance)
+    RACE_BROKEN               = 27, // TITLE Broken
+    RACE_HIGHELF              = 28, // TITLE High Elf
+    RACE_OGRE                 = 29, // TITLE Ogre
+    RACE_ARAKKOA              = 30, // TITLE Arakkoa
 };
 
 // DisplayRace values from CreatureDisplayInfoExtra.dbc
 enum class DisplayRace : uint8
 {
-    None              = 0,
-    Human             = 1,
-    Orc               = 2,
-    Dwarf             = 3,
-    NightElf          = 4,
-    Undead            = 5,
-    Tauren            = 6,
-    Gnome             = 7,
-    Troll             = 8,
-    Goblin            = 9,
-    BloodElf          = 10,
-    Draenei           = 11,
-    FelOrc            = 12,
-    Naga              = 13,
-    Broken            = 14,
-    Skeleton          = 15,
-    Vrykul            = 16,
-    Tuskarr           = 17,
-    ForestTroll       = 18,
-    Taunka            = 19,
-    NorthrendSkeleton = 20,
-    IceTroll          = 21
+    None                 = 0,
+    Human                = 1,
+    Orc                  = 2,
+    Dwarf                = 3,
+    NightElf             = 4,
+    Undead               = 5,
+    Tauren               = 6,
+    Gnome                = 7,
+    Troll                = 8,
+    Goblin               = 9,
+    BloodElf             = 10,
+    Draenei              = 11,
+    Worgen               = 12,
+    Nightborne           = 13,
+    VoidElf              = 14,
+    Eredar               = 15,
+    LightforgedDraenei   = 16,
+    ZandalariTroll       = 17,
+    Vulpera              = 18,
+    PandarenAllianced    = 19,
+    PandarenHorde        = 20,
+    DarkIronDwarf        = 21,
+    DemonHunterHorde     = 22,
+    KulTiran             = 23,
+    DemonHunterAllianced = 24,
+    DracthyrHorde        = 25,
+    DracthyrAllianced    = 26,
+    Broken               = 27,
+    HighElf              = 28,
+    Ogre                 = 29,
+    Arakkoa              = 30
 };
 
 // Class value is index in ChrClasses.dbc
@@ -137,13 +155,39 @@ enum Classes
 };
 
 // max+1 for player class
-#define MAX_CLASSES       12
+#define MAX_CLASSES       31
 
 #define CLASSMASK_ALL_PLAYABLE \
-    ((1<<(CLASS_WARRIOR-1))|(1<<(CLASS_PALADIN-1))|(1<<(CLASS_HUNTER-1))| \
-    (1<<(CLASS_ROGUE-1))  |(1<<(CLASS_PRIEST-1)) |(1<<(CLASS_SHAMAN-1))| \
-    (1<<(CLASS_MAGE-1))   |(1<<(CLASS_WARLOCK-1))|(1<<(CLASS_DRUID-1)) | \
-    (1<<(CLASS_DEATH_KNIGHT-1)))
+    ((1<<(RACE_HUMAN-1))                | \
+    (1<<(RACE_ORC-1))                   | \
+    (1<<(RACE_DWARF-1))                 | \
+    (1<<(RACE_NIGHTELF-1))              | \
+    (1<<(RACE_UNDEAD_PLAYER-1))         | \
+    (1<<(RACE_TAUREN-1))                | \
+    (1<<(RACE_GNOME-1))                 | \
+    (1<<(RACE_TROLL-1))                 | \
+    (1<<(RACE_GOBLIN-1))                | \
+    (1<<(RACE_BLOODELF-1))              | \
+    (1<<(RACE_DRAENEI-1))               | \
+    (1<<(RACE_WORGEN-1))                | \
+    (1<<(RACE_NIGHTBORNE-1))            | \
+    (1<<(RACE_VOIDELF-1))               | \
+    (1<<(RACE_EREDAR-1))                | \
+    (1<<(RACE_LIGHTFORGED-1))           | \
+    (1<<(RACE_ZANDALARI-1))             | \
+    (1<<(RACE_VULPERA-1))               | \
+    (1<<(RACE_PANDAREN_ALLIANCE-1))     | \
+    (1<<(RACE_PANDAREN_HORDE-1))        | \
+    (1<<(RACE_DARKIRONDWARF-1))         | \
+    (1<<(RACE_DEMONHUNTER_HORDE-1))     | \
+    (1<<(RACE_KULTIRAN-1))              | \
+    (1<<(RACE_DEMONHUNTER_ALLIANCE-1))  | \
+    (1<<(RACE_DRACTHYR_HORDE-1))        | \
+    (1<<(RACE_DRACTHYR_ALLIANCE-1))     | \
+    (1<<(RACE_BROKEN-1))                | \
+    (1<<(RACE_HIGHELF-1))               | \
+    (1<<(RACE_OGRE-1))                  | \
+    (1<<(RACE_ARAKKOA-1)))
 
 // valid classes for creature_template.unit_class
 #define CLASSMASK_ALL_CREATURES ((1<<(CLASS_WARRIOR-1)) | (1<<(CLASS_PALADIN-1)) | (1<<(CLASS_ROGUE-1)) | (1<<(CLASS_MAGE-1)))
@@ -740,10 +784,11 @@ enum Language
     LANG_ZOMBIE         = 36,
     LANG_GNOMISH_BINARY = 37,
     LANG_GOBLIN_BINARY  = 38,
+    LANG_GOBLIN         = 39,
     LANG_ADDON          = 0xFFFFFFFF                        // used by addons, in 2.4.0 not exist, replaced by messagetype?
 };
 
-#define LANGUAGES_COUNT   19
+#define LANGUAGES_COUNT   20
 
 enum TeamId : uint8
 {
@@ -3247,10 +3292,11 @@ enum SkillType
     SKILL_PET_WASP                 = 785,
     SKILL_PET_EXOTIC_RHINO         = 786,
     SKILL_PET_EXOTIC_CORE_HOUND    = 787,
-    SKILL_PET_EXOTIC_SPIRIT_BEAST  = 788
+    SKILL_PET_EXOTIC_SPIRIT_BEAST  = 788,
+    SKILL_LANG_GOBLIN              = 825,
 };
 
-#define MAX_SKILL_TYPE               789
+#define MAX_SKILL_TYPE               826
 
 inline SkillType SkillByLockType(LockType locktype)
 {

@@ -2313,6 +2313,9 @@ void AuraEffect::HandleAuraTransform(AuraApplication const* aurApp, uint8 mode, 
                                 case RACE_ORC:
                                     target->SetDisplayId(target->getGender() == GENDER_MALE ? 10139 : 10140);
                                     break;
+                                case RACE_GOBLIN:
+                                    target->SetDisplayId(target->getGender() == GENDER_MALE ? 17829 : 17830);
+                                    break;
                                 // Troll
                                 case RACE_TROLL:
                                     target->SetDisplayId(target->getGender() == GENDER_MALE ? 10135 : 10134);
@@ -2346,6 +2349,11 @@ void AuraEffect::HandleAuraTransform(AuraApplication const* aurApp, uint8 mode, 
                                     target->SetDisplayId(target->getGender() == GENDER_MALE ? 10143 : 10144);
                                     break;
                                 default:
+                                    // Extended races: cross-faction disguise fallback (Orb pattern)
+                                    if (Player::TeamIdForRace(target->getRace()) == TEAM_HORDE)
+                                        target->SetDisplayId(target->getGender() == GENDER_MALE ? 10137 : 10138);
+                                    else
+                                        target->SetDisplayId(target->getGender() == GENDER_MALE ? 10139 : 10140);
                                     break;
                             }
                             break;
@@ -2366,6 +2374,7 @@ void AuraEffect::HandleAuraTransform(AuraApplication const* aurApp, uint8 mode, 
                             {
                                 // Blood Elf
                                 case RACE_BLOODELF:
+                                case RACE_GOBLIN:
                                     target->SetDisplayId(target->getGender() == GENDER_MALE ? 25032 : 25043);
                                     break;
                                 // Orc
@@ -2405,6 +2414,10 @@ void AuraEffect::HandleAuraTransform(AuraApplication const* aurApp, uint8 mode, 
                                     target->SetDisplayId(target->getGender() == GENDER_MALE ? 25038 : 25049);
                                     break;
                                 default:
+                                    if (Player::TeamIdForRace(target->getRace()) == TEAM_HORDE)
+                                        target->SetDisplayId(target->getGender() == GENDER_MALE ? 25037 : 25048);
+                                    else
+                                        target->SetDisplayId(target->getGender() == GENDER_MALE ? 25039 : 25050);
                                     break;
                             }
                             break;
