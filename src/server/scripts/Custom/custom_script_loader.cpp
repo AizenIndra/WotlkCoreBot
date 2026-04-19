@@ -21,6 +21,7 @@ void AddSC_Login_script();
 void AddSC_NPC_RANK_VENDOR();
 void AddSC_OnlineRewardsPlayer();
 void AddSC_BattlePassProgressScripts();
+void AddSC_DuelReset();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
@@ -31,4 +32,5 @@ void AddCustomScripts()
     AddSC_NPC_RANK_VENDOR();
     AddSC_OnlineRewardsPlayer();
     AddSC_BattlePassProgressScripts();
+    AddSC_DuelReset();
 }
