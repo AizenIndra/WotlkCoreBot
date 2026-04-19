@@ -1552,8 +1552,6 @@ void WorldSession::HandleMoveFlagChangeOpcode(WorldPacket& recv_data)
     if (opcode != CMSG_MOVE_GRAVITY_DISABLE_ACK && opcode != CMSG_MOVE_GRAVITY_ENABLE_ACK)
         recv_data >> isApplied;
 
-    sScriptMgr->AnticheatSetCanFlybyServer(_player, movementInfo.HasMovementFlag(MOVEMENTFLAG_CAN_FLY));
-
     Unit* mover = _player->m_mover;
     Player* plrMover = mover->ToPlayer();
 

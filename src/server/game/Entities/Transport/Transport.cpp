@@ -16,7 +16,6 @@
  */
 
 #include "Transport.h"
-#include "Anticheat.h"
 #include "Cell.h"
 #include "CellImpl.h"
 #include "Common.h"
@@ -299,7 +298,7 @@ void MotionTransport::RemovePassenger(WorldObject* passenger, bool withAll)
         if (Player* plr = passenger->ToPlayer())
         {
             sScriptMgr->OnRemovePassenger(ToTransport(), plr);
-            plr->GetAnticheat()->resetFallingData(plr->GetPositionZ());
+            plr->SetFallInformation(0, plr->GetPositionZ());
         }
 
         if (withAll)
@@ -1000,7 +999,7 @@ void StaticTransport::UpdatePassengerPositions()
                 if (passenger->IsInWorld())
                 {
                     GetMap()->PlayerRelocation(passenger->ToPlayer(), x, y, z, o);
-                    passenger->ToPlayer()->GetAnticheat()->resetFallingData(passenger->GetPositionZ());
+                    passenger->ToPlayer()->SetFallInformation(0, passenger->GetPositionZ());
                 }
                 break;
             case TYPEID_GAMEOBJECT:
@@ -1046,7 +1045,7 @@ void StaticTransport::RemovePassenger(WorldObject* passenger, bool withAll)
         if (Player* plr = passenger->ToPlayer())
         {
             sScriptMgr->OnRemovePassenger(ToTransport(), plr);
-            plr->GetAnticheat()->resetFallingData(plr->GetPositionZ());
+            plr->SetFallInformation(0, plr->GetPositionZ());
         }
 
         if (withAll)

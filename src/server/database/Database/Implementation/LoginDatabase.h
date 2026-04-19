@@ -132,8 +132,6 @@ enum LoginDatabaseStatements : uint32
     LOGIN_SEL_ACCOUNT_TOTP_SECRET,
     LOGIN_UPD_ACCOUNT_TOTP_SECRET,
 
-    LOGIN_INS_ACCOUNT_ANTICHEAT,
-
     LOGIN_INS_UPTIME,
 
     //Store

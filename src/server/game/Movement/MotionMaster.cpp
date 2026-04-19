@@ -16,7 +16,6 @@
  */
 
 #include "MotionMaster.h"
-#include "Anticheat.h"
 #include "ChargeMovementGenerator.h"
 #include "ConfusedMovementGenerator.h"
 #include "Creature.h"
@@ -304,8 +303,6 @@ void MotionMaster::MoveConfused()
 
     if (_owner->IsPlayer())
     {
-        _owner->ToPlayer()->GetAnticheat()->setUnderACKmount();
-        _owner->ToPlayer()->GetAnticheat()->setSkipOnePacketForASH(true);
         LOG_DEBUG("movement.motionmaster", "Player ({}) move confused", _owner->GetGUID().ToString());
         Mutate(new ConfusedMovementGenerator<Player>(), MOTION_SLOT_CONTROLLED);
     }
@@ -497,8 +494,6 @@ void MotionMaster::MovePoint(uint32 id, float x, float y, float z, ForcedMovemen
 
     if (_owner->IsPlayer())
     {
-        _owner->ToPlayer()->GetAnticheat()->setUnderACKmount();
-        _owner->ToPlayer()->GetAnticheat()->setSkipOnePacketForASH(true);
         LOG_DEBUG("movement.motionmaster", "Player ({}) targeted point (Id: {} X: {} Y: {} Z: {})", _owner->GetGUID().ToString(), id, x, y, z);
         Mutate(new PointMovementGenerator<Player>(id, x, y, z, forcedMovement, speed, orientation, nullptr, generatePath, forceDestination, animTier), slot);
     }
@@ -685,8 +680,6 @@ void MotionMaster::MoveJump(float x, float y, float z, float speedXY, float spee
 
     if (_owner->IsPlayer())
     {
-        _owner->ToPlayer()->GetAnticheat()->setUnderACKmount();
-        _owner->ToPlayer()->GetAnticheat()->setSkipOnePacketForASH(true);
         Mutate(new JumpMovementGenerator<Player>(id, x, y, z, 0.0f, speedXY, max_height, false, false, target), MOTION_SLOT_CONTROLLED);
     }
     else
@@ -718,7 +711,7 @@ void MotionMaster::MoveFall(uint32 id /*=0*/, bool addFlagForNPC)
     {
         _owner->AddUnitMovementFlag(MOVEMENTFLAG_FALLING);
         _owner->m_movementInfo.SetFallTime(0);
-        _owner->ToPlayer()->GetAnticheat()->resetFallingData(_owner->GetPositionZ());
+        _owner->ToPlayer()->SetFallInformation(0, _owner->GetPositionZ());
     }
     else if (_owner->IsCreature() && addFlagForNPC) // pussywizard
     {
@@ -751,8 +744,6 @@ void MotionMaster::MoveCharge(float x, float y, float z, float speed, uint32 id,
 
     if (_owner->IsPlayer())
     {
-        _owner->ToPlayer()->GetAnticheat()->setUnderACKmount();
-        _owner->ToPlayer()->GetAnticheat()->setSkipOnePacketForASH(true);
         LOG_DEBUG("movement.motionmaster", "Player ({}) charge point (X: {} Y: {} Z: {})", _owner->GetGUID().ToString(), x, y, z);
         Mutate(new ChargeMovementGenerator<Player>(id, x, y, z, generatePath, speed, finalOrient, path, targetGUID), MOTION_SLOT_CONTROLLED);
     }
@@ -779,8 +770,6 @@ void MotionMaster::MoveCharge(PathGenerator const& path, float speed /*= SPEED_C
 
     if (_owner->IsPlayer())
     {
-        _owner->ToPlayer()->GetAnticheat()->setUnderACKmount();
-        _owner->ToPlayer()->GetAnticheat()->setSkipOnePacketForASH(true);
         LOG_DEBUG("movement.motionmaster", "Player ({}) charge by path (X: {} Y: {} Z: {})", _owner->GetGUID().ToString(), dest.x, dest.y, dest.z);
         Mutate(new ChargePathMovementGenerator<Player>(EVENT_CHARGE, dest.x, dest.y, dest.z, pts, speed), MOTION_SLOT_CONTROLLED);
     }
@@ -841,8 +830,6 @@ void MotionMaster::MoveFleeing(Unit* enemy, uint32 time)
 
     if (_owner->IsPlayer())
     {
-        _owner->ToPlayer()->GetAnticheat()->setUnderACKmount();
-        _owner->ToPlayer()->GetAnticheat()->setSkipOnePacketForASH(true);
         LOG_DEBUG("movement.motionmaster", "Player ({}) flee from {} ({})",
             _owner->GetGUID().ToString(), enemy->IsPlayer() ? "player" : "creature", enemy->GetGUID().ToString());
         Mutate(new FleeingMovementGenerator<Player>(enemy->GetGUID()), MOTION_SLOT_CONTROLLED);

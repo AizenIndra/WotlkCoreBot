@@ -17,7 +17,6 @@
 
 #include "AreaDefines.h"
 #include "ArenaSpectator.h"
-#include "Anticheat.h"
 #include "Battleground.h"
 #include "BattlegroundMgr.h"
 #include "CellImpl.h"
@@ -39,7 +38,6 @@
 #include "Vehicle.h"
 #include "WaypointMovementGenerator.h"
 #include "World.h"
-#include "WorldConfig.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
 
@@ -461,9 +459,6 @@ void WorldSession::HandleMoverRelocation(MovementInfo& movementInfo, Unit* mover
         // if we were on a transport, leave (handles both players and creatures)
         if (Transport* transport = mover->GetTransport())
         {
-            if (mover->IsPlayer())
-                sScriptMgr->AnticheatSetUnderACKmount(mover->ToPlayer()); // just for safe
-
             transport->RemovePassenger(mover);
             mover->SetTransport(nullptr);
             movementInfo.transport.Reset();
@@ -520,15 +515,10 @@ void WorldSession::HandleMoverRelocation(MovementInfo& movementInfo, Unit* mover
 
 bool WorldSession::VerifyMovementInfo(MovementInfo const& movementInfo, Player* plrMover, Unit* mover, Opcodes opcode) const
 {
-    if (!movementInfo.pos.IsPositionValid())
-    {
-        if (plrMover)
-        {
-            sScriptMgr->AnticheatUpdateMovementInfo(plrMover, movementInfo);
-        }
+    (void)plrMover;
 
+    if (!movementInfo.pos.IsPositionValid())
         return false;
-    }
 
     if (!mover->movespline->Finalized())
     {
@@ -541,87 +531,18 @@ bool WorldSession::VerifyMovementInfo(MovementInfo const& movementInfo, Player* 
     {
         // Xinef: skip moving packets
         if (movementInfo.HasMovementFlag(MOVEMENTFLAG_MASK_MOVING))
-        {
-            if (plrMover)
-            {
-                sScriptMgr->AnticheatUpdateMovementInfo(plrMover, movementInfo);
-            }
-            return false;
-        }
-    }
-
-    bool jumpopcode = false;
-    if (opcode == MSG_MOVE_JUMP)
-    {
-        jumpopcode = true;
-        if (plrMover && !sScriptMgr->AnticheatHandleDoubleJump(plrMover, mover))
             return false;
     }
-
-    if (opcode == MSG_MOVE_JUMP && plrMover && sWorld->getBoolConfig(CONFIG_ANTICHEAT_MEGAJUMP_ENABLED)
-        && !sWorld->isAreaIdDisabledForAC(plrMover->GetAreaId()))
-    {
-        if (plrMover->GetAnticheat()->IsIllegalMegaJump(movementInfo))
-        {
-            plrMover->GetAnticheat()->punish(6);
-            return false;
-        }
-    }
-
-    if (plrMover && !sWorld->isAreaIdDisabledForAC(plrMover->GetAreaId()))
-    {
-        if (sWorld->getBoolConfig(CONFIG_ANTICHEAT_FAKEJUMPER_ENABLED) && !movementInfo.HasMovementFlag(MOVEMENTFLAG_ONTRANSPORT)
-            && mover->IsFalling() && movementInfo.pos.GetPositionZ() > mover->GetPositionZ())
-        {
-            if (!plrMover->GetAnticheat()->isJumpingbyOpcode() && !plrMover->GetAnticheat()->underACKmount() && !plrMover->IsFlying())
-            {
-                plrMover->GetAnticheat()->punish(3);
-                return false;
-            }
-        }
-
-        if (sWorld->getBoolConfig(CONFIG_ANTICHEAT_FAKEFLYINGMODE_ENABLED) && !movementInfo.HasMovementFlag(MOVEMENTFLAG_ONTRANSPORT)
-            && !plrMover->GetAnticheat()->isCanFlybyServer() && !plrMover->GetAnticheat()->underACKmount()
-            && movementInfo.HasMovementFlag(MOVEMENTFLAG_MASK_MOVING_FLY) && !plrMover->IsInWater())
-        {
-            plrMover->GetAnticheat()->punish(4);
-            return false;
-        }
-
-        if (plrMover->GetAnticheat()->IsIllegalWaterWalkMovement(movementInfo))
-        {
-            plrMover->GetAnticheat()->punish(5);
-            return false;
-        }
-    }
-
-    /* start some hack detection */
-    if (plrMover && !sScriptMgr->AnticheatCheckMovementInfo(plrMover, movementInfo, mover, jumpopcode))
-        return false;
 
     if (movementInfo.HasMovementFlag(MOVEMENTFLAG_ONTRANSPORT))
     {
         // We were teleported, skip packets that were broadcast before teleport
         if (movementInfo.pos.GetExactDist2d(mover) > SIZE_OF_GRIDS)
-        {
-            if (plrMover)
-            {
-                sScriptMgr->AnticheatUpdateMovementInfo(plrMover, movementInfo);
-                //LOG_INFO("anticheat", "MovementHandler:: 2 We were teleported, skip packets that were broadcast before teleport");
-            }
             return false;
-        }
 
         if (!Acore::IsValidMapCoord(movementInfo.pos.GetPositionX() + movementInfo.transport.pos.GetPositionX(), movementInfo.pos.GetPositionY() + movementInfo.transport.pos.GetPositionY(),
             movementInfo.pos.GetPositionZ() + movementInfo.transport.pos.GetPositionZ(), movementInfo.pos.GetOrientation() + movementInfo.transport.pos.GetOrientation()))
-        {
-            if (plrMover)
-            {
-                sScriptMgr->AnticheatUpdateMovementInfo(plrMover, movementInfo);
-            }
-
             return false;
-        }
     }
 
     // rooted mover sent packet without root or moving AND root - ignore, due to client crash possibility
@@ -652,22 +573,11 @@ bool WorldSession::ProcessMovementInfo(MovementInfo& movementInfo, Unit* mover, 
 
     // fall damage generation (ignore in flight case that can be triggered also at lags in moment teleportation to another map).
     if (opcode == MSG_MOVE_FALL_LAND && plrMover && !plrMover->IsInFlight())
-    {
         plrMover->HandleFall(movementInfo);
-
-        sScriptMgr->AnticheatSetJumpingbyOpcode(plrMover, false);
-    }
 
     // interrupt parachutes upon falling or landing in water
     if (opcode == MSG_MOVE_FALL_LAND || opcode == MSG_MOVE_START_SWIM)
-    {
         mover->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_LANDING); // Parachutes
-
-        if (plrMover)
-        {
-            sScriptMgr->AnticheatSetJumpingbyOpcode(plrMover, false);
-        }
-    }
 
     if (plrMover && ((movementInfo.flags & MOVEMENTFLAG_SWIMMING) != 0) != plrMover->IsInWater())
     {
@@ -675,10 +585,6 @@ bool WorldSession::ProcessMovementInfo(MovementInfo& movementInfo, Unit* mover, 
         plrMover->SetInWater(!plrMover->IsInWater() || plrMover->GetMap()->IsUnderWater(plrMover->GetPhaseMask(), movementInfo.pos.GetPositionX(),
             movementInfo.pos.GetPositionY(), movementInfo.pos.GetPositionZ(), plrMover->GetCollisionHeight()));
     }
-
-    // Must run after a successful movement packet: updates client/server timestamps for AntiSpeedHack (see 0009-AntiCheat.patch).
-    if (plrMover)
-        sScriptMgr->AnticheatUpdateMovementInfo(plrMover, movementInfo);
 
     if (plrMover)//Hook for OnPlayerMove
     {
@@ -767,8 +673,6 @@ void WorldSession::HandleForceSpeedChangeAck(WorldPacket& recvData)
             LOG_ERROR("network.opcode", "WorldSession::HandleForceSpeedChangeAck: Unknown move type opcode: {}", opcode);
             return;
     }
-
-    sScriptMgr->AnticheatSetUnderACKmount(_player);
 
     SpeedOpcodePair const& speedOpcodes = SetSpeed2Opc_table[move_type];
     WorldPacket data(speedOpcodes[static_cast<size_t>(SpeedOpcodeIndex::ACK_RESPONSE)], 18);

@@ -16,11 +16,8 @@
  */
 
 #include "PlayerScript.h"
-#include "Anticheat.h"
 #include "Player.h"
 #include "ScriptMgr.h"
-#include "WorldConfig.h"
-#include "World.h"
 #include "ScriptMgrMacros.h"
 
 void ScriptMgr::OnPlayerBeforeDurabilityRepair(Player* player, ObjectGuid npcGUID, ObjectGuid itemGUID, float& discountMod, uint8 guildBank)
@@ -867,104 +864,6 @@ void ScriptMgr::OnPlayerLeaveCombat(Player* player)
 void ScriptMgr::OnPlayerQuestAbandon(Player* player, uint32 questId)
 {
     CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ON_QUEST_ABANDON, script->OnPlayerQuestAbandon(player, questId));
-}
-
-// Player anti cheat
-void ScriptMgr::AnticheatSetCanFlybyServer(Player* player, bool apply)
-{
-    if (player)
-        player->GetAnticheat()->setCanFlybyServer(apply);
-    CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ANTICHEAT_SET_CAN_FLY_BY_SERVER, script->AnticheatSetCanFlybyServer(player, apply));
-}
-
-void ScriptMgr::AnticheatSetUnderACKmount(Player* player)
-{
-    if (player)
-        player->GetAnticheat()->setUnderACKmount();
-    CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ANTICHEAT_SET_UNDER_ACK_MOUNT, script->AnticheatSetUnderACKmount(player));
-}
-
-void ScriptMgr::AnticheatSetRootACKUpd(Player* player)
-{
-    if (player)
-        player->GetAnticheat()->setRootACKUpd(0);
-    CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ANTICHEAT_SET_ROOT_ACK_UPD, script->AnticheatSetRootACKUpd(player));
-}
-
-void ScriptMgr::AnticheatSetJumpingbyOpcode(Player* player, bool jump)
-{
-    if (player)
-        player->GetAnticheat()->setJumpingbyOpcode(jump);
-    CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ANTICHEAT_SET_JUMPING_BY_OPCODE, script->AnticheatSetJumpingbyOpcode(player, jump));
-}
-
-void ScriptMgr::AnticheatUpdateMovementInfo(Player* player, MovementInfo const& movementInfo)
-{
-    if (player)
-        player->GetAnticheat()->updateMovementInfo(movementInfo);
-    CALL_ENABLED_HOOKS(PlayerScript, PLAYERHOOK_ANTICHEAT_UPDATE_MOVEMENT_INFO, script->AnticheatUpdateMovementInfo(player, movementInfo));
-}
-
-bool ScriptMgr::AnticheatHandleDoubleJump(Player* player, Unit* mover)
-{
-    if (player)
-    {
-        if (player->GetAnticheat()->isJumpingbyOpcode() && !player->GetAnticheat()->underACKmount())
-        {
-            player->GetAnticheat()->punish(2);
-            return false;
-        }
-        player->GetAnticheat()->setSkipOnePacketForASH(true);
-        player->GetAnticheat()->setUnderACKmount();
-        player->GetAnticheat()->setJumpingbyOpcode(true);
-    }
-    if (ScriptRegistry<PlayerScript>::EnabledHooks[PLAYERHOOK_ANTICHEAT_HANDLE_DOUBLE_JUMP].empty())
-        return true;
-    for (auto const& script : ScriptRegistry<PlayerScript>::EnabledHooks[PLAYERHOOK_ANTICHEAT_HANDLE_DOUBLE_JUMP])
-        if (!script->AnticheatHandleDoubleJump(player, mover))
-            return false;
-    return true;
-}
-
-bool ScriptMgr::AnticheatCheckMovementInfo(Player* player, MovementInfo const& movementInfo, Unit* mover, bool jump)
-{
-    if (player)
-    {
-        if (!player->GetAnticheat()->checkMovementInfo(movementInfo, jump))
-        {
-            uint8 const fail = player->GetAnticheat()->getLastMovementCheckFailure();
-            bool kick = false;
-            char const* reason = "Kicked by anticheat::movement";
-            if (fail == 1 && sWorld->getBoolConfig(CONFIG_ANTICHEAT_SPEEDHACK_KICK_ENABLED))
-                kick = true;
-            else if (fail == 2 && sWorld->getBoolConfig(CONFIG_ANTICHEAT_CLIMBHACK_KICK_ENABLED))
-                kick = true;
-            else if (fail == 3 && sWorld->getBoolConfig(CONFIG_ANTICHEAT_SPEEDHACK_KICK_ENABLED))
-                kick = true;
-            else if (fail == 4 && sWorld->getBoolConfig(CONFIG_ANTICHEAT_TELEPORT_SEGMENT_KICK_ENABLED))
-                kick = true;
-
-            if (kick)
-            {
-                if (fail == 1)
-                    reason = "Kicked by anticheat::ASH";
-                else if (fail == 2)
-                    reason = "Kicked by anticheat::ClimbHack";
-                else if (fail == 3)
-                    reason = "Kicked by anticheat::IgnoreControl";
-                else if (fail == 4)
-                    reason = "Kicked by anticheat::TeleportSegment";
-                player->GetSession()->KickPlayer(reason);
-            }
-            return false;
-        }
-    }
-    if (ScriptRegistry<PlayerScript>::EnabledHooks[PLAYERHOOK_ANTICHEAT_CHECK_MOVEMENT_INFO].empty())
-        return true;
-    for (auto const& script : ScriptRegistry<PlayerScript>::EnabledHooks[PLAYERHOOK_ANTICHEAT_CHECK_MOVEMENT_INFO])
-        if (!script->AnticheatCheckMovementInfo(player, movementInfo, mover, jump))
-            return false;
-    return true;
 }
 
 bool ScriptMgr::OnPlayerCanUpdateSkill(Player* player, uint32 skillId)

@@ -492,15 +492,6 @@ public: /* PlayerScript */
     void OnPlayerLearnTaxiNode(Player const* player, uint32 nodeId);
     void OnPremiumExpired(Player* player);
 
-    // Anti cheat
-    void AnticheatSetCanFlybyServer(Player* player, bool apply);
-    void AnticheatSetUnderACKmount(Player* player);
-    void AnticheatSetRootACKUpd(Player* player);
-    void AnticheatUpdateMovementInfo(Player* player, MovementInfo const& movementInfo);
-    void AnticheatSetJumpingbyOpcode(Player* player, bool jump);
-    bool AnticheatHandleDoubleJump(Player* player, Unit* mover);
-    bool AnticheatCheckMovementInfo(Player* player, MovementInfo const& movementInfo, Unit* mover, bool jump);
-
 public: /* AccountScript */
     void OnAccountLogin(uint32 accountId);
     void OnBeforeAccountDelete(uint32 accountId);

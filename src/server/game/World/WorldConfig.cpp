@@ -738,32 +738,6 @@ void WorldConfig::BuildConfigCache()
 
     SetConfigValue<std::string>(CONFIG_NEW_CHAR_STRING, "PlayerStart.String", "");
 
-    // Movement anticheat (AntiCheats.* in worldserver.conf)
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_FAKEJUMPER_ENABLED, "AntiCheats.FakeJumper.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_FAKEFLYINGMODE_ENABLED, "AntiCheats.FakeFlyingmode.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_DOUBLEJUMP_ENABLED, "AntiCheats.DoubleJump.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_FLYHACK_ENABLED, "AntiCheats.FlyHack.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_SPEEDHACK_ENABLED, "AntiCheats.SpeedHack.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_IGNORE_CONTROL_MOVEMENT_ENABLED, "AntiCheats.IgnoreControlMovement.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_CLIMBHACK_ENABLED, "AntiCheats.ClimbHack.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_CLIMBHACK_KICK_ENABLED, "AntiCheats.ClimbHack.Kick.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_SPEEDHACK_KICK_ENABLED, "AntiCheats.SpeedHack.Kick.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_FLYHACK_KICK_ENABLED, "AntiCheats.FlyHack.Kick.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_FAKEJUMPER_KICK_ENABLED, "AntiCheats.FakeJumper.Kick.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_FAKEFLYINGMODE_KICK_ENABLED, "AntiCheats.FakeFlyingmode.Kick.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_NOFALLINGDMG_KICK_ENABLED, "AntiCheats.NoFallingDmg.Kick.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_TELEPORT_SEGMENT_ENABLED, "AntiCheats.TeleportSegment.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_TELEPORT_SEGMENT_KICK_ENABLED, "AntiCheats.TeleportSegment.Kick.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_WATERWALK_ENABLED, "AntiCheats.WaterWalk.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_WATERWALK_KICK_ENABLED, "AntiCheats.WaterWalk.Kick.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_MEGAJUMP_ENABLED, "AntiCheats.MegaJump.Enabled", true);
-    SetConfigValue<bool>(CONFIG_ANTICHEAT_MEGAJUMP_KICK_ENABLED, "AntiCheats.MegaJump.Kick.Enabled", true);
-    SetConfigValue<uint32>(CONFIG_ANTICHEAT_FLYHACK_TIMER, "AntiCheats.FlyHackTimer", 3000);
-    SetConfigValue<float>(CONFIG_ANTICHEAT_TELEPORT_MAX_SEGMENT_YARDS, "AntiCheats.TeleportSegment.MaxYards", 150.0f);
-    SetConfigValue<float>(CONFIG_ANTICHEAT_MEGAJUMP_BASE_ZSPEED, "AntiCheats.MegaJump.BaseZSpeed", 7.9575f);
-    SetConfigValue<float>(CONFIG_ANTICHEAT_MEGAJUMP_ZSPEED_TOLERANCE_MULT, "AntiCheats.MegaJump.ZSpeedToleranceMult", 1.40f);
-    SetConfigValue<std::string>(CONFIG_ANTICHEAT_AREA_ID_EXCLUDES, "AntiCheats.areaIdExcludes", "");
-
     // Achievement
     SetConfigValue<uint32>(CONFIG_ACHIEVEMENT_REALM_FIRST_KILL_WINDOW, "Achievement.RealmFirstKillWindow", 60);
 }

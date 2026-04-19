@@ -24,7 +24,6 @@
 #include "MoveSpline.h"
 #include "MoveSplineInit.h"
 #include "ObjectMgr.h"
-#include "Anticheat.h"
 #include "Player.h"
 #include "Spell.h"
 #include "Transport.h"
@@ -657,7 +656,7 @@ void FlightPathMovementGenerator::DoFinalize(Player* player)
         player->StopMoving();
 
         // When the player reaches the last flight point, teleport to destination taxi node location
-        player->GetAnticheat()->resetFallingData(player->GetPositionZ());
+        player->SetFallInformation(0, player->GetPositionZ());
     }
 
     player->RemovePlayerFlag(PLAYER_FLAGS_TAXI_BENCHMARK);

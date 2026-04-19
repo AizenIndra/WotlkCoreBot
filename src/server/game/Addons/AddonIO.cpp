@@ -1208,8 +1208,6 @@ void AddonIO::HandleGuildLevelRequest(Player* player, std::string /*body*/)
         std::string message = fmt::format("ASMSG_GUILD_LEVEL_INFO\t{}:{}:{}:{}:{}",
             guild->GetLevel(), xp, totalxp, guild->GetGuildTodayXP(), dailyCap);
 
-        LOG_ERROR("guild", "Sent HandleGuildLevelRequest message: {}", message);
-
         player->SendAddonMessage(message);
 
     }
@@ -1222,17 +1220,8 @@ void AddonIO::HandleGuildOnlineRequest(Player* player, std::string /*body*/)
 
     if (Guild* guild = player->GetGuild())
     {
-        int online = guild->GetOnlineMembers();
-        int total = guild->GetMemberCount();
-
-        LOG_ERROR("guild", "Sending ASMSG_GUILD_PLAYERS_COUNT: {}:{}", online, total);
-
-        //Outdated sends %d:%d
-        //player->SendAddonMessage("ASMSG_GUILD_PLAYERS_COUNT\t%d:%d", online, total);
-
         player->SendAddonMessage(fmt::format("ASMSG_GUILD_PLAYERS_COUNT\t{}:{}",
             guild->GetOnlineMembers(), guild->GetMemberCount()));
-
     }
 }
 
@@ -1247,8 +1236,6 @@ void AddonIO::HandleGuildIlvlsRequest(Player* player, std::string /*body*/)
         std::unordered_map<uint32, Guild::Member> members = guild->GetMembers();
         for (const auto& itr : members)
             response += itr.second.GetName() + ":" + std::to_string(itr.second.GetAverageLvl()) + "|";
-
-            LOG_ERROR("guild", "Sending ASMSG_GUILD_PLAYERS_ILVL: {}", response);
 
         player->SendAddonMessage(response.c_str());
     }

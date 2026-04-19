@@ -10496,8 +10496,6 @@ void Unit::Mount(uint32 mount, uint32 VehicleId, uint32 creatureEntry)
 
     if (Player* player = ToPlayer())
     {
-        sScriptMgr->AnticheatSetUnderACKmount(player);
-
         // mount as a vehicle
         if (VehicleId)
         {
@@ -10588,8 +10586,6 @@ void Unit::Dismount()
     // (it could probably happen when logging in after a previous crash)
     if (Player* player = ToPlayer())
     {
-        sScriptMgr->AnticheatSetUnderACKmount(player);
-
         if (Pet* pPet = player->GetPet())
         {
             if (pPet->HasUnitFlag(UNIT_FLAG_STUNNED) && !pPet->HasUnitState(UNIT_STATE_STUNNED))
@@ -14387,11 +14383,6 @@ void Unit::SetControlled(bool apply, UnitState state, Unit* source /*= nullptr*/
             default:
                 break;
         }
-
-        if (IsPlayer())
-        {
-            sScriptMgr->AnticheatSetRootACKUpd(ToPlayer());
-        }
     }
     else
     {
@@ -14480,9 +14471,7 @@ void Unit::SetStunned(bool apply)
         SetUnitFlag(UNIT_FLAG_STUNNED);
 
         if (IsPlayer())
-        {
             SetStandState(UNIT_STAND_STATE_STAND);
-        }
 
         SetRooted(true, true);
 
@@ -14956,11 +14945,6 @@ void Unit::RemoveCharmedBy(Unit* charmer)
             default:
                 break;
         }
-    }
-
-    if (Player* player = ToPlayer())
-    {
-        sScriptMgr->AnticheatSetUnderACKmount(player);
     }
 
     // xinef: restore threat
@@ -15572,7 +15556,8 @@ void Unit::JumpTo(float speedXY, float speedZ, bool forward)
         data << float(speedXY);                                 // Horizontal speed
         data << float(-speedZ);                                 // Z Movement speed (vertical)
 
-        ToPlayer()->SendDirectMessage(&data);
+        if (Player* const plr = ToPlayer())
+            plr->SendDirectMessage(&data);
     }
 }
 
@@ -15672,11 +15657,6 @@ bool Unit::HandleSpellClick(Unit* clicker, int8 seatId)
 void Unit::EnterVehicle(Unit* base, int8 seatId)
 {
     CastCustomSpell(VEHICLE_SPELL_RIDE_HARDCODED, SPELLVALUE_BASE_POINT0, seatId + 1, base, TRIGGERED_IGNORE_CASTER_MOUNTED_OR_ON_VEHICLE);
-
-    if (Player* player = ToPlayer())
-    {
-        sScriptMgr->AnticheatSetUnderACKmount(player);
-    }
 }
 
 void Unit::EnterVehicleUnattackable(Unit* base, int8 seatId)
@@ -15716,8 +15696,6 @@ void Unit::_EnterVehicle(Vehicle* vehicle, int8 seatId, AuraApplication const* a
     {
         if (vehicle->GetBase()->IsPlayer() && player->IsInCombat())
             return;
-
-        sScriptMgr->AnticheatSetUnderACKmount(player);
 
         InterruptNonMeleeSpells(false);
         player->StopCastingCharm();
@@ -15773,9 +15751,8 @@ void Unit::ExitVehicle(Position const* /*exitPosition*/)
 
     GetVehicleBase()->RemoveAurasByType(SPELL_AURA_CONTROL_VEHICLE, GetGUID());
     if (Player* player = ToPlayer())
-    {
         player->SetCanTeleport(true);
-    }
+
     //! The following call would not even be executed successfully as the
     //! SPELL_AURA_CONTROL_VEHICLE unapply handler already calls _ExitVehicle without
     //! specifying an exitposition. The subsequent call below would return on if (!m_vehicle).
@@ -15787,10 +15764,6 @@ void Unit::ExitVehicle(Position const* /*exitPosition*/)
     //! relocate exiting passengers based on Unit::moveSpline data. Either way,
     //! Coming Soon(TM)
 
-    if (Player* player = ToPlayer())
-    {
-        sScriptMgr->AnticheatSetUnderACKmount(player);
-    }
 }
 
 bool VehicleDespawnEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
@@ -15858,11 +15831,7 @@ void Unit::_ExitVehicle(Position const* exitPosition)
     AddUnitState(UNIT_STATE_MOVE);
 
     if (player)
-    {
         player->SetFallInformation(GameTime::GetGameTime().count(), GetPositionZ());
-
-        sScriptMgr->AnticheatSetUnderACKmount(player);
-    }
 
     // xinef: hack for flameleviathan seat vehicle
     VehicleEntry const* vehicleInfo = vehicle->GetVehicleInfo();

@@ -48,7 +48,6 @@
 #include "SkillExtraItems.h"
 #include "SocialMgr.h"
 #include "Spell.h"
-#include "Anticheat.h"
 #include <algorithm>
 #include "SpellAuraEffects.h"
 #include "SpellAuras.h"
@@ -1083,10 +1082,6 @@ void Spell::EffectJump(SpellEffIndex effIndex)
     CalculateJumpSpeeds(effIndex, m_caster->GetExactDist2d(unitTarget), speedXY, speedZ);
     m_caster->GetMotionMaster()->MoveJump(*unitTarget, speedXY, speedZ);
 
-    if (m_caster->IsPlayer())
-    {
-        sScriptMgr->AnticheatSetUnderACKmount(m_caster->ToPlayer());
-    }
 }
 
 void Spell::EffectJumpDest(SpellEffIndex effIndex)
@@ -1122,11 +1117,6 @@ void Spell::EffectJumpDest(SpellEffIndex effIndex)
             player->SetCanTeleport(true);
         }
 
-        if (m_caster->IsPlayer())
-        {
-            sScriptMgr->AnticheatSetUnderACKmount(m_caster->ToPlayer());
-        }
-
         return;
     }
 
@@ -1145,11 +1135,6 @@ void Spell::EffectJumpDest(SpellEffIndex effIndex)
         player->SetCanTeleport(true);
     }
     m_caster->GetMotionMaster()->MoveJump(x, y, z, speedXY, speedZ);
-
-    if (m_caster->IsPlayer())
-    {
-        sScriptMgr->AnticheatSetUnderACKmount(m_caster->ToPlayer());
-    }
 }
 
 void Spell::CalculateJumpSpeeds(uint8 i, float dist, float& speedXY, float& speedZ)
@@ -1186,11 +1171,6 @@ void Spell::EffectTeleportUnits(SpellEffIndex /*effIndex*/)
 
     if (!unitTarget || unitTarget->IsInFlight())
         return;
-
-    if (unitTarget->IsPlayer())
-    {
-        sScriptMgr->AnticheatSetUnderACKmount(unitTarget->ToPlayer());
-    }
 
     // Pre effects
     switch (m_spellInfo->Id)
@@ -4895,7 +4875,7 @@ void Spell::EffectCharge(SpellEffIndex /*effIndex*/)
         if (player)
         {
             // charge changes fall time
-            player->GetAnticheat()->resetFallingData(m_caster->GetPositionZ());
+            player->SetFallInformation(0, m_caster->GetPositionZ());
 
             if (!m_spellInfo->HasAttribute(SPELL_ATTR0_CANCELS_AUTO_ATTACK_COMBAT) && !m_spellInfo->IsPositive() && m_caster->GetTarget() == unitTarget->GetGUID())
             {
@@ -4921,10 +4901,6 @@ void Spell::EffectCharge(SpellEffIndex /*effIndex*/)
             m_caster->GetMotionMaster()->MoveCharge(*m_preGeneratedPath, speed, targetGUID);
         }
 
-        if (player)
-        {
-            sScriptMgr->AnticheatSetUnderACKmount(player);
-        }
     }
 }
 
@@ -4945,11 +4921,6 @@ void Spell::EffectChargeDest(SpellEffIndex /*effIndex*/)
         }
 
         m_caster->GetMotionMaster()->MoveCharge(pos.m_positionX, pos.m_positionY, pos.m_positionZ);
-
-        if (m_caster->IsPlayer())
-        {
-            sScriptMgr->AnticheatSetUnderACKmount(m_caster->ToPlayer());
-        }
     }
 }
 
@@ -5020,11 +4991,6 @@ void Spell::EffectKnockBack(SpellEffIndex effIndex)
     }
 
     unitTarget->KnockbackFrom(x, y, speedxy, speedz);
-
-    if (unitTarget->IsPlayer())
-    {
-        sScriptMgr->AnticheatSetUnderACKmount(unitTarget->ToPlayer());
-    }
 }
 
 void Spell::EffectLeapBack(SpellEffIndex effIndex)
@@ -5040,14 +5006,9 @@ void Spell::EffectLeapBack(SpellEffIndex effIndex)
     //1891: Disengage
     unitTarget->JumpTo(speedxy, speedz, m_spellInfo->SpellFamilyName != SPELLFAMILY_HUNTER);
 
-    if (m_caster->IsPlayer())
-    {
-        sScriptMgr->AnticheatSetUnderACKmount(m_caster->ToPlayer());
-    }
-
     // xinef: changes fall time
     if (m_caster->IsPlayer())
-        m_caster->ToPlayer()->GetAnticheat()->resetFallingData(m_caster->GetPositionZ());
+        m_caster->ToPlayer()->SetFallInformation(0, m_caster->GetPositionZ());
 }
 
 void Spell::EffectQuestClear(SpellEffIndex effIndex)
@@ -5138,11 +5099,6 @@ void Spell::EffectPullTowards(SpellEffIndex effIndex)
     float speedZ = unitTarget->GetDistance(pos) / speedXY * 0.5f * Movement::gravity;
 
     unitTarget->GetMotionMaster()->MoveJump(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), speedXY, speedZ);
-
-    if (unitTarget->IsPlayer())
-    {
-        sScriptMgr->AnticheatSetUnderACKmount(unitTarget->ToPlayer());
-    }
 }
 
 void Spell::EffectDispelMechanic(SpellEffIndex effIndex)

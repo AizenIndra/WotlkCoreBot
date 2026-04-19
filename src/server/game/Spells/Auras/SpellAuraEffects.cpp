@@ -2951,7 +2951,6 @@ void AuraEffect::HandleFeignDeath(AuraApplication const* aurApp, uint8 mode, boo
 
     if (Player* targetPlayer = target->ToPlayer())
     {
-        sScriptMgr->AnticheatSetUnderACKmount(targetPlayer);
     }
 
     if (apply)
@@ -3467,7 +3466,6 @@ void AuraEffect::HandleAuraWaterWalk(AuraApplication const* aurApp, uint8 mode, 
 
     if (Player* targetPlayer = target->ToPlayer())
     {
-        sScriptMgr->AnticheatSetUnderACKmount(targetPlayer);
     }
 
     if (!apply)
@@ -3489,7 +3487,6 @@ void AuraEffect::HandleAuraFeatherFall(AuraApplication const* aurApp, uint8 mode
 
     if (Player* targetPlayer = target->ToPlayer())
     {
-        sScriptMgr->AnticheatSetUnderACKmount(targetPlayer);
     }
 
     if (!apply)
@@ -3515,7 +3512,6 @@ void AuraEffect::HandleAuraHover(AuraApplication const* aurApp, uint8 mode, bool
 
     if (Player* targetPlayer = target->ToPlayer())
     {
-        sScriptMgr->AnticheatSetUnderACKmount(targetPlayer);
     }
 
     if (!apply)
@@ -3834,7 +3830,6 @@ void AuraEffect::HandleAuraModIncreaseSpeed(AuraApplication const* aurApp, uint8
 
     if (Player* targetPlayer = target->ToPlayer())
     {
-        sScriptMgr->AnticheatSetUnderACKmount(targetPlayer);
     }
 }
 
@@ -3879,7 +3874,6 @@ void AuraEffect::HandleAuraModIncreaseFlightSpeed(AuraApplication const* aurApp,
 
     if (Player* targetPlayer = target->ToPlayer())
     {
-        sScriptMgr->AnticheatSetUnderACKmount(targetPlayer);
     }
 }
 
@@ -3894,7 +3888,6 @@ void AuraEffect::HandleAuraModIncreaseSwimSpeed(AuraApplication const* aurApp, u
 
     if (Player* targetPlayer = target->ToPlayer())
     {
-        sScriptMgr->AnticheatSetUnderACKmount(targetPlayer);
     }
 }
 
@@ -3915,7 +3908,6 @@ void AuraEffect::HandleAuraModDecreaseSpeed(AuraApplication const* aurApp, uint8
 
     if (Player* targetPlayer = target->ToPlayer())
     {
-        sScriptMgr->AnticheatSetUnderACKmount(targetPlayer);
     }
 }
 
@@ -3932,7 +3924,6 @@ void AuraEffect::HandleAuraModUseNormalSpeed(AuraApplication const* aurApp, uint
 
     if (Player* targetPlayer = target->ToPlayer())
     {
-        sScriptMgr->AnticheatSetUnderACKmount(targetPlayer);
     }
 }
 

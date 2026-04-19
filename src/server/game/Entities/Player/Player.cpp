@@ -16,7 +16,6 @@
  */
 
 #include "Player.h"
-#include "Anticheat.h"
 #include "AccountMgr.h"
 #include "AchievementMgr.h"
 #include "AreaDefines.h"
@@ -404,7 +403,6 @@ Player::Player(WorldSession* session): Unit(), m_mover(this), _cinematicMgr(*thi
 
     m_achievementMgr = new AchievementMgr(this);
     m_reputationMgr = new ReputationMgr(this);
-    m_anticheat = new Anticheat(this);
 
     m_NeedToSaveGlyphs = false;
     m_MountBlockId = 0;
@@ -438,9 +436,6 @@ Player::Player(WorldSession* session): Unit(), m_mover(this), _cinematicMgr(*thi
 Player::~Player()
 {
     sScriptMgr->OnDestructPlayer(this);
-
-    delete m_anticheat;
-    m_anticheat = nullptr;
 
     // it must be unloaded already in PlayerLogout and accessed only for loggined player
     //m_social = nullptr;

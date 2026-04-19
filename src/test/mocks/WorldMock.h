@@ -85,7 +85,6 @@ public:
     MOCK_METHOD(std::string const&, GetRealmName, (), (const));
     MOCK_METHOD(void, SetRealmName, (std::string name), ());
     MOCK_METHOD(void, RemoveOldCorpses, ());
-    MOCK_METHOD(bool, isAreaIdDisabledForAC, (uint32 areaId), (const));
 };
 #pragma GCC diagnostic pop
 

@@ -188,8 +188,6 @@ public:
     [[nodiscard]] virtual uint32 GetXpForNextLevel(uint8 level) = 0;
     virtual SQLQueryHolderCallback& AddQueryHolderCallback(SQLQueryHolderCallback&& callback) = 0;
 
-    [[nodiscard]] virtual bool isAreaIdDisabledForAC(uint32 areaId) const = 0;
-
     void LoadShop();
     void LoadDonateCurrency();
     PlayerDonate FindShopCurrency(uint32 AccountID);
