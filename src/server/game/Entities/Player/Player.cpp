@@ -16428,6 +16428,7 @@ void Player::RewardRankPoints(uint32 amount, RewardSource source)
         case PVP_ITEM: sourceText = "использование предмета"; break;
         case PVP_KILL: sourceText = "убийство игрока"; break;
         case PVE_ACHIEVE: sourceText = "достижение"; break;
+        case PVE_BOSS_KILL: sourceText = "убийство босса"; break;
         default: break;
     }
 

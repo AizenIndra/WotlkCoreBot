@@ -2195,7 +2195,8 @@ public:
         PVP_QUEST,
         PVP_ITEM,
         PVP_KILL,
-        PVE_ACHIEVE
+        PVE_ACHIEVE,
+        PVE_BOSS_KILL
     };
 
     static constexpr uint32 RankPointsByLevel[50] =
