@@ -57,6 +57,7 @@
 
 constexpr auto SPELL_STUCK = 7355;
 constexpr auto SPELL_FREEZE = 9454;
+constexpr uint32 SPELL_PLAYER_MUTE_VISUAL = 47044;
 
 struct AccountFlagText
 {
@@ -2646,6 +2647,15 @@ public:
             stmt->SetData(0, muteTime);
             std::string nameLink = handler->playerLink(player->GetName());
 
+            target->CastSpell(target, SPELL_PLAYER_MUTE_VISUAL, true);
+            if (Aura* muteAura = target->GetAura(SPELL_PLAYER_MUTE_VISUAL))
+            {
+                int32 const muteMs = muteDuration > (INT32_MAX / IN_MILLISECONDS)
+                    ? INT32_MAX
+                    : muteDuration * IN_MILLISECONDS;
+                muteAura->SetDuration(muteMs);
+            }
+
             if (sWorld->getBoolConfig(CONFIG_SHOW_MUTE_IN_WORLD))
             {
                 handler->SendWorldText(LANG_COMMAND_MUTEMESSAGE_WORLD, muteBy, nameLink, secsToTimeString(muteDuration, true), muteReasonStr);
@@ -2742,6 +2752,7 @@ public:
 
         if (playerTarget)
         {
+            playerTarget->RemoveAura(SPELL_PLAYER_MUTE_VISUAL);
             ChatHandler(playerTarget->GetSession()).PSendSysMessage(LANG_YOUR_CHAT_ENABLED);
         }
 
