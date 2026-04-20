@@ -10,7 +10,8 @@
 #include "ScriptedCreature.h"
 #include "Player.h"
 #include "GridNotifiers.h"
-
+#include "ThreatManager.h"
+#include <vector>
 
 
 enum Spells
@@ -303,19 +304,21 @@ DoMeleeAttackIfReady();
 
         void ChangeTarget()
         {
-            std::list<HostileReference*> threatList = me->GetThreatMgr().GetThreatList();
-            if (threatList.empty())
+            std::vector<Unit*> targets;
+            for (ThreatReference const* ref : me->GetThreatMgr().GetUnsortedThreatList())
+            {
+                if (!ref->IsAvailable())
+                    continue;
+                if (Unit* victim = ref->GetVictim())
+                    targets.push_back(victim);
+            }
+
+            if (targets.empty())
                 return;
 
-            // Randomly select a new target from the threat list
-            auto it = threatList.begin();
-            std::advance(it, urand(0, threatList.size() - 1));
-            Unit* newTarget = ObjectAccessor::GetUnit(*me, (*it)->getUnitGuid());
-
+            Unit* newTarget = targets[urand(0, uint32(targets.size() - 1))];
             if (newTarget && newTarget != me->GetVictim())
-            {
                 me->Attack(newTarget, true);
-            }
         }
     };
 
