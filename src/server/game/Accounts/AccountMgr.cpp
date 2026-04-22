@@ -18,6 +18,7 @@
 #include "AccountMgr.h"
 #include "Common.h"
 #include "DatabaseEnv.h"
+#include "GameTime.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "SRP6.h"
@@ -352,12 +353,8 @@ namespace AccountMgr
     }
     bool GetVipStatus(uint32 accountId)
     {
-        LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_GET_ACCOUNT_PREMIUM_STATUS_BY_ID);
-        stmt->SetData(0, accountId);
-        PreparedQueryResult result = LoginDatabase.Query(stmt);
-        if (result)
-            return true;
-        return false;
+        time_t unsetdate = GetVIPunsetDate(accountId);
+        return unsetdate > GameTime::GetGameTime().count();
     }
     void SetVipStatus(uint32 accountId, time_t unsetdate)
     {

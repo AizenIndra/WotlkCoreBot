@@ -688,7 +688,7 @@ void WorldConfig::BuildConfigCache()
     SetConfigValue<bool>(CONFIG_VIP_CUSTOMIZE, "Config.Vip.Customize.Command", false);
     SetConfigValue<bool>(CONFIG_VIP_CAPITAL, "Config.Vip.Capital.Command", false);
     SetConfigValue<bool>(CONFIG_VIP_APPEAR, "Config.Vip.Appear.Command", false);
-    SetConfigValue<bool>(CONFIG_VIP_ITEM_HELPER, "Config.Vip.Item.Helper", false);
+
     // Rate premium
     SetConfigValue<float>(RATE_VIP_XP_KILL, "Rate.XP.Kill.Premium", 1.0f);
     SetConfigValue<float>(RATE_VIP_XP_QUEST, "Rate.XP.Quest.Premium", 1.0f);

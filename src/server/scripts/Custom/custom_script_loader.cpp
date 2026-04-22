@@ -18,13 +18,14 @@
 // This is where scripts' loading functions should be declared:
 void AddSC_mod_hardcore();
 void AddSC_Login_script();
-void AddSC_custom_item();
 void AddSC_first_character_weekly_premium();
 void AddSC_autoprem_commandscript();
 void AddSC_NPC_RANK_VENDOR();
 void AddSC_OnlineRewardsPlayer();
 void AddSC_BattlePassProgressScripts();
 void AddSC_DuelReset();
+void AddSC_custom_item();
+void AddSC_CustomTeleportOrCommand();
 
 // WorldBosses
 void AddSC_aliden();
@@ -45,13 +46,14 @@ void AddCustomScripts()
 {
     AddSC_mod_hardcore();
     AddSC_Login_script();
-    AddSC_custom_item();
     AddSC_first_character_weekly_premium();
     AddSC_autoprem_commandscript();
     AddSC_NPC_RANK_VENDOR();
     AddSC_OnlineRewardsPlayer();
     AddSC_BattlePassProgressScripts();
     AddSC_DuelReset();
+    AddSC_custom_item();
+    AddSC_CustomTeleportOrCommand();
 
     // WorldBosses
     AddSC_aliden();
