@@ -1091,6 +1091,17 @@ void WorldSession::HandlePlayerLoginFromDB(LoginQueryHolder const& holder)
     if (pCurrChar->IsGameMaster())
         ChatHandler(this).SendNotification(LANG_GM_ON);
 
+        if (sWorld->getBoolConfig(CONFIG_VIP_ITEM_HELPER))
+        {
+            if (!pCurrChar->HasItemCount(973))
+                pCurrChar->AddItem(973, 1);
+        }
+        else
+        {
+            if (pCurrChar->HasItemCount(973))
+                pCurrChar->DestroyItemCount(973, 1, true);
+        }
+    
     std::string IP_str = GetRemoteAddress();
     LOG_INFO("entities.player", "Account: {} (IP: {}) Login Character:[{}] ({}) Level: {}",
         GetAccountId(), IP_str, pCurrChar->GetName(), pCurrChar->GetGUID().ToString(), pCurrChar->GetLevel());

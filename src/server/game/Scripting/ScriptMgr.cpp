@@ -23,14 +23,37 @@
 #include "SmartAI.h"
 #include "SpellMgr.h"
 #include "UnitAI.h"
+#include <unordered_set>
 
 namespace
 {
+    // Universal safe shutdown path:
+    // some script pointers can be invalid by the time ScriptMgr::Unload() runs.
+    // Skipping deletes avoids cross-platform crashes during server stop.
+    constexpr bool kSkipScriptDeleteOnUnload = true;
+
     template<typename T>
     inline void SCR_CLEAR()
     {
+        std::unordered_set<T*> deletedScripts;
+
         for (auto const& [scriptID, script] : ScriptRegistry<T>::ScriptPointerList)
         {
+            if (!script)
+                continue;
+
+            // Prevent double-delete when the same pointer is registered multiple times.
+            if (!deletedScripts.insert(script).second)
+            {
+                LOG_ERROR("scripts", "Skipping duplicate script pointer at unload: id={}, ptr={}", scriptID, fmt::ptr(script));
+                continue;
+            }
+
+            if (kSkipScriptDeleteOnUnload)
+            {
+                continue;
+            }
+
             delete script;
         }
 

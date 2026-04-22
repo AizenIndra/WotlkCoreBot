@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <ctime>
 #include <map>
+#include <optional>
 #include <vector>
 
 namespace
@@ -24,6 +25,13 @@ namespace
         std::string name;
         uint32 endTime = 0;
         uint32 premiumCost = 0;
+    };
+
+    struct CachedSeason
+    {
+        SeasonRow row;
+        uint32 checkedAt = 0;
+        bool found = false;
     };
 
     void LogRequest(Player* player, char const* route, uint32 opcode, std::string const& payload)
@@ -90,6 +98,31 @@ namespace
         out.name = f[2].Get<std::string>();
         out.endTime = f[3].Get<uint32>();
         out.premiumCost = f[4].Get<uint32>();
+        return true;
+    }
+
+    bool LoadSeasonCached(std::string const& category, SeasonRow& out)
+    {
+        // Avoid a blocking season lookup on every kill event.
+        static std::map<std::string, CachedSeason> cache;
+        uint32 now = static_cast<uint32>(GameTime::GetGameTime().count());
+        uint32 constexpr CACHE_TTL_SEC = 10;
+
+        auto& entry = cache[category];
+        if (entry.checkedAt && (now - entry.checkedAt) < CACHE_TTL_SEC)
+        {
+            if (!entry.found)
+                return false;
+            out = entry.row;
+            return true;
+        }
+
+        entry.checkedAt = now;
+        entry.found = LoadSeason(category, entry.row);
+        if (!entry.found)
+            return false;
+
+        out = entry.row;
         return true;
     }
 
@@ -396,20 +429,10 @@ namespace
             return;
 
         SeasonRow season;
-        if (!LoadSeason(category, season))
+        if (!LoadSeasonCached(category, season))
             return;
 
         uint32 guid = player->GetGUID().GetCounter();
-        uint32 matchedTasks = 0;
-        LOG_INFO("battlepass", "TASK_EVT acc={} guid={} name='{}' season={} category='{}' event='{}' target={} delta={}",
-            player->GetSession() ? player->GetSession()->GetAccountId() : 0,
-            guid,
-            player->GetName(),
-            season.id,
-            category,
-            eventType,
-            targetId,
-            delta);
 
         if (QueryResult tasks = WorldDatabase.Query(
                 "SELECT id, requirement, reward_xp FROM battlepass_task "
@@ -423,7 +446,6 @@ namespace
                 uint32 taskId = tf[0].Get<uint32>();
                 uint32 requirement = tf[1].Get<uint32>();
                 uint32 rewardXp = tf[2].Get<uint32>();
-                ++matchedTasks;
 
                 uint32 oldProg = 0;
                 uint32 reqCap = requirement;
@@ -456,35 +478,7 @@ namespace
 
                 if (becameComplete)
                     AddAccountBattlePassXpFromTask(player, season, category, rewardXp);
-
-                if (QueryResult pr = CharacterDatabase.Query(
-                        "SELECT current_progress, required_progress, claimed "
-                        "FROM character_battlepass_task_progress "
-                        "WHERE guid = {} AND season_id = {} AND category = '{}' AND task_id = {} LIMIT 1",
-                        guid, season.id, category, taskId))
-                {
-                    Field* pf = pr->Fetch();
-                    LOG_INFO("battlepass", "TASK_EVT_APPLY guid={} season={} category='{}' task={} progress={}/{} claimed={}",
-                        guid,
-                        season.id,
-                        category,
-                        taskId,
-                        pf[0].Get<uint32>(),
-                        pf[1].Get<uint32>(),
-                        pf[2].Get<uint8>());
-                }
             } while (tasks->NextRow());
-        }
-        else
-        {
-            LOG_INFO("battlepass", "TASK_EVT_MATCH_NONE guid={} season={} category='{}' event='{}' target={}",
-                guid, season.id, category, eventType, targetId);
-        }
-
-        if (matchedTasks > 0)
-        {
-            LOG_INFO("battlepass", "TASK_EVT_DONE guid={} season={} category='{}' event='{}' target={} matched={}",
-                guid, season.id, category, eventType, targetId, matchedTasks);
         }
     }
 }
