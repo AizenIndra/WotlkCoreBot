@@ -1,421 +1,603 @@
-#include "AccountMgr.h"
-#include "Chat.h"
-#include "GameTime.h"
-#include "Item.h"
-#include "Player.h"
-#include "ScriptMgr.h"
-#include "ScriptedGossip.h"
-#include "World.h"
+/*
+* Copyright (C) 2016-2019 AtieshCore <https://at-wow.org/>
+* Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+* Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+*
+* This program is free software; you can redistribute it and/or modify it
+* under the terms of the GNU General Public License as published by the
+* Free Software Foundation; either version 2 of the License, or (at your
+* option) any later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+* more details.
+*
+* You should have received a copy of the GNU General Public License along
+* with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 
-namespace
-{
-constexpr uint32 ACTION_BACK = 0;
-constexpr uint32 ACTION_RANK_INFO = 2;
-constexpr uint32 ACTION_PREMIUM_MENU = 10;
-constexpr uint32 ACTION_BONUSES_INFO = 11;
-constexpr uint32 ACTION_PREMIUM_BUY = 78;
-constexpr uint32 ACTION_PREMIUM_EXTEND = 79;
-constexpr uint32 ACTION_PREMIUM_7 = 80;
-constexpr uint32 ACTION_PREMIUM_14 = 81;
-constexpr uint32 ACTION_PREMIUM_31 = 82;
-constexpr uint32 ACTION_PREM_COMMANDS_INFO = 13;
-constexpr uint32 ACTION_PREM_CHAR_MANAGEMENT = 14;
-constexpr uint32 ACTION_PREM_CHAR_CHANGING = 15;
-constexpr uint32 ACTION_PREM_REPAIR = 16;
-constexpr uint32 ACTION_PREM_REMOVE_DESERTER = 17;
-constexpr uint32 ACTION_PREM_REMOVE_WEAKNESS = 18;
-constexpr uint32 ACTION_PREM_BUFFS = 19;
-constexpr uint32 ACTION_PREM_BANK = 20;
-constexpr uint32 ACTION_PREM_RESET_COOLDOWN = 22;
-constexpr uint32 ACTION_PREM_DUAL_SPEC = 12;
-constexpr uint32 ACTION_PREM_RESET_TALENTS = 71;
-constexpr uint32 ACTION_PREM_MAX_WEAPON_SKILLS = 73;
-constexpr uint32 ACTION_PREM_CHANGE_NAME = 74;
-constexpr uint32 ACTION_PREM_CUSTOMIZE = 75;
-constexpr uint32 ACTION_PREM_CHANGE_FACTION = 76;
-constexpr uint32 ACTION_PREM_CHANGE_RACE = 77;
-}
+#include "Chat.h"
+#include "ScriptedGossip.h"
+#include "ScriptMgr.h"
+#include "Map.h"
+#include "WorldSession.h"
+#include "Item.h"
+#include "Language.h"
+#include "InstanceSaveMgr.h"
+#include "VipMountHelper.h"
+#include "../CustomTeleport/CustomTeleport.h"
+#include "Guild.h"
+#include "DBCStores.h"
+#include "GuildMgr.h"
+#include "StringFormat.h"
+#include "DatabaseEnv.h"
+#include "Player.h"
+
+#define CONST_ARENA_RENAME 100
+#define CONST_ARENA_CUSTOMIZE 100
+#define CONST_ARENA_CHANGE_FACTION 500
+#define CONST_ARENA_CHANGE_RACE 250
+
+#define GTS session->GetAcoreString
+
+uint32 constexpr aurassSize = 13;
+uint32 aurass[aurassSize] = { 15366, 16609, 48162, 48074, 48170, 43223, 36880, 69994, 33081, 26035, 48469, 57623, 47440 };
 
 class custom_item : public ItemScript
 {
 public:
-    custom_item() : ItemScript("custom_item") { }
+    custom_item() : ItemScript("custom_item") {}
+
+private:
+    static constexpr uint32 ACTION_RANK_INFO = 200;
+
+    void ShowRankInfo(Player* player, Item* item)
+    {
+        if (!player)
+            return;
+
+        player->PlayerTalkClass->ClearMenus();
+        std::string name = player->GetName();
+        std::ostringstream femb;
+
+        femb << "Уважаемый|cff065961 " << name << "|r\n\n"
+            << "Ваш текуший ранг: |cff065961" << player->GetRankByExp() << "|r\n"
+            << "У вас: |cff065961" << player->GetRankPoints() << "|r опыта\n"
+            << "До следущего ранга: |cff065961" << player->PointsUntilNextRank() << "|r опыта\n\n"
+            << "Ранги это вот этот значок |TInterface\\icons\\Ability_warrior_rampage:14:14:0:-1|t который отображается в дебафах.\n\n"
+            << "Поднимать ранг вы можете за опыт который получите за:\n"
+            << "   * Победу на арене\n   * Победу на поле боя\n   * Убийство игроков\n   * Награда за квесты\n   * Ивенты\n"
+            << "У |cff065961VIP аккаунтов|r рейтинг на опыт в 2 раза больше.\n\n"
+            << "Что дает ранг ?\n"
+            << "На каждом ранге есть свои бонусы, чем выше ранг тем больше бонусов.\n"
+            << "На каждом ранге у вас открываются секретный продавец в котором могут быть полезные вещи такие как: вещи на А9-T11, трансмогрификацию, маунты, итд...";
+
+        AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "Обновить", GOSSIP_SENDER_MAIN, ACTION_RANK_INFO);
+        AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "Назад", GOSSIP_SENDER_MAIN, 0);
+        player->PlayerTalkClass->SendGossipMenu(femb.str().c_str(), item->GetGUID());
+    }
 
     bool OnUse(Player* player, Item* item, SpellCastTargets const& /*targets*/) override
     {
-        if (!player || !item)
+        WorldSession* session = player->GetSession();
+        player->PlayerTalkClass->ClearMenus();
+
+        if (player->GetMap()->IsBattlegroundOrArena())
+        {
+            ChatHandler(player->GetSession()).PSendSysMessage(LANG_NOT_USED_BG);
+            CloseGossipMenuFor(player);
             return false;
+        }
+        if (player->IsInCombat())
+        {
+            ChatHandler(player->GetSession()).PSendSysMessage(LANG_YOU_IN_COMBAT);
+            CloseGossipMenuFor(player);
+            return false;
+        }
+        if (player->IsInFlight())
+        {
+            ChatHandler(player->GetSession()).PSendSysMessage(LANG_YOU_IN_FLIGHT);
+            CloseGossipMenuFor(player);
+            return false;
+        }
+        if (player->HasStealthAura())
+        {
+            ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_NOT_USED_STEALTH);
+            CloseGossipMenuFor(player);
+            return false;
+        }
+        if (player->isDead() || player->HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH))
+        {
+            ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_NOT_USED_DEAD);
+            CloseGossipMenuFor(player);
+            return false;
+        }
 
-        if (!CanOpenMenu(player))
-            ShowMainMenu(player, item);
+        // Show main menu
+        AddGossipItemFor(player, GOSSIP_ICON_TAXI, GTS(LANG_ITEM_TELEPORT_MENU), GOSSIP_SENDER_MAIN, 100);
+        AddGossipItemFor(player, GOSSIP_ICON_BATTLE, GTS(LANG_RANK_SYSTEM_MENU), GOSSIP_SENDER_MAIN, 200);
 
+        // Show guild menu if player is in guild
+        if (player->GetGuild())
+            AddGossipItemFor(player, GOSSIP_ICON_TABARD, GTS(LANG_GSYSTEM_GUILD_MENU), GOSSIP_SENDER_MAIN, 103);
+
+        // Show premium menu if player is premium
+        if (player->IsPremium())
+            AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_VIP_MENU), GOSSIP_SENDER_MAIN, 10);
+        else
+            ChatHandler(player->GetSession()).PSendSysMessage("Некоторые функции требуют премиум статус.");
+
+        AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_CLOSE), GOSSIP_SENDER_MAIN, 3);
+        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, item->GetGUID());
         return false;
     }
 
     void OnGossipSelect(Player* player, Item* item, uint32 sender, uint32 action) override
     {
-        if (!player || !item || sender != GOSSIP_SENDER_MAIN)
-            return;
-
+        WorldSession* session = player->GetSession();
         player->PlayerTalkClass->ClearMenus();
 
-        switch (action)
+        if (sender == GOSSIP_SENDER_MAIN)
         {
-            case ACTION_BACK:
-                ShowMainMenu(player, item);
+            switch (action)
+            {
+            case 0: // Back from teleportation to main menu
+            case 1: // Back from teleportation submenu
+            {
+                // Show main menu
+                AddGossipItemFor(player, GOSSIP_ICON_TAXI, GTS(LANG_ITEM_TELEPORT_MENU), GOSSIP_SENDER_MAIN, 100);
+                AddGossipItemFor(player, GOSSIP_ICON_BATTLE, GTS(LANG_RANK_SYSTEM_MENU), GOSSIP_SENDER_MAIN, 200);
+
+                // Show guild menu if player is in guild
+                if (player->GetGuild())
+                    AddGossipItemFor(player, GOSSIP_ICON_TABARD, GTS(LANG_GSYSTEM_GUILD_MENU), GOSSIP_SENDER_MAIN, 103);
+
+                // Show premium menu if player is premium
+                if (player->IsPremium())
+                    AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_VIP_MENU), GOSSIP_SENDER_MAIN, 10);
+
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_CLOSE), GOSSIP_SENDER_MAIN, 3);
+                SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, item->GetGUID());
                 break;
-            case ACTION_RANK_INFO:
+            }
+            case 3: // Close menu
+            {
+                CloseGossipMenuFor(player);
+                break;
+            }
+            case 10: // VIP character management
+            {
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_COMMAND_LIST), GOSSIP_SENDER_MAIN, 13);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_CHARACTER_MANAGEMENT), GOSSIP_SENDER_MAIN, 14);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_CHARACTER_CHANGEING), GOSSIP_SENDER_MAIN, 15);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_REPAIR_EQUIP), GOSSIP_SENDER_MAIN, 16);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_REMOVE_DESERTER), GOSSIP_SENDER_MAIN, 17);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_REMOVE_WEAKNESS), GOSSIP_SENDER_MAIN, 18);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_GIVE_BUFFS), GOSSIP_SENDER_MAIN, 19);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_VIP_BANK), GOSSIP_SENDER_MAIN, 20);
+                if (!player->IsInCombat() || !player->IsInFlight() || !player->GetMap()->IsBattlegroundOrArena() || !player->HasStealthAura() || !player->HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH) || !player->isDead())
+                    AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_REMOVE_COOLDOWN), GOSSIP_SENDER_MAIN, 22);
+                if (!player->IsInCombat() || !player->IsInFlight() || !player->GetMap()->IsBattlegroundOrArena() || !player->HasStealthAura() || !player->HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH) || !player->isDead())
+                    AddGossipItemFor(player, GOSSIP_ICON_INTERACT_1, GTS(LANG_ITEM_RESTORE_HP_MANA), GOSSIP_SENDER_MAIN, 25);
+                AddGossipItemFor(player, GOSSIP_ICON_INTERACT_1, GTS(LANG_ITEM_RESET_SAVED_INSTANCES), GOSSIP_SENDER_MAIN, 26);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_CLOSE), GOSSIP_SENDER_MAIN, 3);
+                SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, item->GetGUID());
+                break;
+            }
+            case 100: // Teleportation main menu
+            {
+                sCustomTeleportMgr->TeleportListMain(player, item->GetGUID());
+                break;
+            }
+            case 200: // Rank system info
+            {
                 ShowRankInfo(player, item);
                 break;
-            case ACTION_PREMIUM_MENU:
-                ShowPremiumMenu(player, item);
-                break;
-            case ACTION_BONUSES_INFO:
-                ShowRatesAndBonuses(player, item);
-                break;
-            case ACTION_PREMIUM_BUY:
-                ShowPremiumBuyMenu(player, item, false);
-                break;
-            case ACTION_PREMIUM_EXTEND:
-                ShowPremiumBuyMenu(player, item, true);
-                break;
-            case ACTION_PREMIUM_7:
-                BuyOrExtendPremium(player, item, 7, 20);
-                break;
-            case ACTION_PREMIUM_14:
-                BuyOrExtendPremium(player, item, 14, 40);
-                break;
-            case ACTION_PREMIUM_31:
-                BuyOrExtendPremium(player, item, 31, 80);
-                break;
-            case ACTION_PREM_COMMANDS_INFO:
-                ShowPremiumCommandsInfo(player, item);
-                break;
-            case ACTION_PREM_CHAR_MANAGEMENT:
-                ShowPremiumCharacterManagement(player, item);
-                break;
-            case ACTION_PREM_CHAR_CHANGING:
-                ShowPremiumCharacterChanging(player, item);
-                break;
-            case ACTION_PREM_REPAIR:
-                player->DurabilityRepairAll(false, 0.0f, true);
-                ChatHandler(player->GetSession()).PSendSysMessage(
-                    player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "Экипировка починена." : "Equipment repaired.");
-                ShowPremiumMenu(player, item);
-                break;
-            case ACTION_PREM_REMOVE_DESERTER:
-                HandleRemoveDeserter(player, item);
-                break;
-            case ACTION_PREM_REMOVE_WEAKNESS:
-                player->RemoveAura(15007);
-                ShowPremiumMenu(player, item);
-                break;
-            case ACTION_PREM_BUFFS:
-                HandlePremiumBuffs(player, item);
-                break;
-            case ACTION_PREM_BANK:
-                CloseGossipMenuFor(player);
-                player->GetSession()->SendShowBank(player->GetGUID());
-                break;
-            case ACTION_PREM_RESET_COOLDOWN:
-                HandleResetCooldown(player, item);
-                break;
-            case ACTION_PREM_DUAL_SPEC:
+            }
+            case 12: // dual spec
+            {
                 if (player->GetSpecsCount() == 1 && !(player->GetLevel() < sWorld->getIntConfig(CONFIG_MIN_DUALSPEC_LEVEL)))
                     player->CastSpell(player, 63680, true);
                 player->CastSpell(player, 63624, true);
-                ShowPremiumCharacterManagement(player, item);
+                CloseGossipMenuFor(player);
                 break;
-            case ACTION_PREM_RESET_TALENTS:
+            }
+            case 13: // Vip info
+            {
+                ChatHandler(player->GetSession()).PSendSysMessage("|cff006699Следующие VIP команды доступны для вас:");
+                if (sWorld->getBoolConfig(CONFIG_VIP_DEBUFF))
+                    ChatHandler(player->GetSession()).PSendSysMessage("|cff006699 .vip debuff|r - Снять дебаффы Дезертир и Слабость после воскрешения");
+                if (sWorld->getBoolConfig(CONFIG_VIP_BANK))
+                    ChatHandler(player->GetSession()).PSendSysMessage("|cff006699 .vip bank|r - Открыть окно банка");
+                if (sWorld->getBoolConfig(CONFIG_VIP_MAIL))
+                    ChatHandler(player->GetSession()).PSendSysMessage("|cff006699 .vip mail|r - Открыть почтовый ящик");
+                if (sWorld->getBoolConfig(CONFIG_VIP_REPAIR))
+                    ChatHandler(player->GetSession()).PSendSysMessage("|cff006699 .vip repair|r - Починить экипировку без затрат");
+                if (sWorld->getBoolConfig(CONFIG_VIP_RESET_TALENTS))
+                    ChatHandler(player->GetSession()).PSendSysMessage("|cff006699 .vip resettalents|r - Сбросить таланты");
+                if (sWorld->getBoolConfig(CONFIG_VIP_TAXI))
+                    ChatHandler(player->GetSession()).PSendSysMessage("|cff006699 .vip taxi|r - Открыть окно полетов");
+                if (sWorld->getBoolConfig(CONFIG_VIP_HOME))
+                    ChatHandler(player->GetSession()).PSendSysMessage("|cff006699 .vip home|r - Телепорт на точку возврата (Камень возврата)");
+                if (sWorld->getBoolConfig(CONFIG_VIP_CAPITAL))
+                    ChatHandler(player->GetSession()).PSendSysMessage("|cff006699 .vip capital|r - Телепорт в главный город");
+                if (sWorld->getBoolConfig(CONFIG_VIP_CHANGE_RACE))
+                    ChatHandler(player->GetSession()).PSendSysMessage("|cff006699 .vip changerace|r - Сменить расу");
+                if (sWorld->getBoolConfig(CONFIG_VIP_CUSTOMIZE))
+                    ChatHandler(player->GetSession()).PSendSysMessage("|cff006699 .vip customize|r - Изменить внешность персонажа");
+                if (sWorld->getBoolConfig(CONFIG_VIP_APPEAR))
+                    ChatHandler(player->GetSession()).PSendSysMessage("|cff006699 .vip app|r - Телепорт к участнику группы");
+                player->PlayerTalkClass->SendCloseGossip();
+                break;
+            }
+            case 14: // Character management submenu
+            {
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_DUAL_SPEC), GOSSIP_SENDER_MAIN, 12);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_RESET_TALENT), GOSSIP_SENDER_MAIN, 71, GTS(LANG_ITEM_RESET_TALENT_SURE), 0, false);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_SKILLS_WEAPON), GOSSIP_SENDER_MAIN, 72);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_MAXSKILL), GOSSIP_SENDER_MAIN, 73);
+                AddGossipItemFor(player, GOSSIP_ICON_MONEY_BAG, GTS(LANG_ITEM_BACK_TO_MAIN_MENU), GOSSIP_SENDER_MAIN, 10);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_CLOSE), GOSSIP_SENDER_MAIN, 3);
+                SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, item->GetGUID());
+                break;
+            }
+            case 15: // Character changing submenu
+            {
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_CHANGE_NAME), GOSSIP_SENDER_MAIN, 74);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_CHANGE_OF_APPEARANCE), GOSSIP_SENDER_MAIN, 75);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_CHANGE_FACTION), GOSSIP_SENDER_MAIN, 76);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_CHANGE_RACE), GOSSIP_SENDER_MAIN, 77);
+                AddGossipItemFor(player, GOSSIP_ICON_MONEY_BAG, GTS(LANG_ITEM_BACK_TO_MAIN_MENU), GOSSIP_SENDER_MAIN, 10);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_CLOSE), GOSSIP_SENDER_MAIN, 3);
+                SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, item->GetGUID());
+                break;
+            }
+            case 16: // repair
+            {
+                player->DurabilityRepairAll(false, 0.0f, true);
+                ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_REPAIR_CONFIRM);
+                player->PlayerTalkClass->SendCloseGossip();
+                break;
+            }
+            case 17: // Remove deserter
+            {
+                if (!player->HasAura(26013))
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_DESERTER_NOT_FOUND);
+                }
+                else
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    player->RemoveAurasDueToSpell(26013);
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_DESERTER_REMOVED);
+                }
+                break;
+            }
+            case 18: // Remove weakness
+            {
+                player->RemoveAura(15007);
+                player->PlayerTalkClass->SendCloseGossip();
+                break;
+            }
+            case 19: // Give buffs
+            {
+                if (player->HasAura(45523))
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    player->GetSession()->SendAreaTriggerMessage(GTS(LANG_ITEM_MSG_COOLDOWN));
+                }
+                else
+                {
+                    player->RemoveAurasByType(SPELL_AURA_MOUNTED);
+                    for (size_t i = 0; i < aurassSize; ++i)
+                        player->AddAura(aurass[i], player);
+                    ChatHandler(player->GetSession()).SendNotification("|cffC67171Баффы получены!");
+                    player->CastSpell(player, 45523, true);
+                    player->PlayerTalkClass->SendCloseGossip();
+                }
+                break;
+            }
+            case 20: // VIP bank
+            {
+                player->PlayerTalkClass->SendCloseGossip();
+                player->GetSession()->SendShowBank(player->GetGUID());
+                break;
+            }
+            case 22: // Remove cooldown
+            {
+                if (player->HasAura(45523))
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    player->GetSession()->SendAreaTriggerMessage(GTS(LANG_ITEM_MSG_RESET_COOLDOWN));
+                }
+                else
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    player->RemoveArenaSpellCooldowns(true);
+                    player->GetSession()->SendAreaTriggerMessage(GTS(LANG_ITEM_MSG_RESET_COOLDOWN));
+                    player->CastSpell(player, 45523, true);
+                }
+                break;
+            }
+            case 25: // Restore HP/Mana
+            {
+                if (player->IsInCombat())
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    ChatHandler(player->GetSession()).PSendSysMessage(GTS(LANG_ITEM_ERROR_IN_COMBAT));
+                    return;
+                }
+                else if (player->IsInFlight())
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    ChatHandler(player->GetSession()).PSendSysMessage(GTS(LANG_ITEM_ERROR_IN_FLIGHT));
+                    return;
+                }
+                else if (player->GetMap()->IsBattlegroundOrArena())
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    ChatHandler(player->GetSession()).PSendSysMessage(GTS(LANG_ITEM_ERROR_IN_BG));
+                    return;
+                }
+                else
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    if (player->getPowerType() == POWER_MANA)
+                        player->SetPower(POWER_MANA, player->GetMaxPower(POWER_MANA));
+
+                    player->SetHealth(player->GetMaxHealth());
+                    player->CastSpell(player, 31726, true);
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_MSG_RESTORE_HP_MANA);
+                }
+                break;
+            }
+            case 26: // Reset saved instances
+            {
+                if (player->IsInCombat())
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    ChatHandler(player->GetSession()).PSendSysMessage(GTS(LANG_ITEM_ERROR_IN_COMBAT));
+                    return;
+                }
+                else if (player->IsInFlight())
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    ChatHandler(player->GetSession()).PSendSysMessage(GTS(LANG_ITEM_ERROR_IN_FLIGHT));
+                    return;
+                }
+                else if (player->GetMap()->IsBattlegroundOrArena())
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    ChatHandler(player->GetSession()).PSendSysMessage(GTS(LANG_ITEM_ERROR_IN_BG));
+                    return;
+                }
+                else
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    // Удаляем все сохраненные подземелья, кроме текущей карты
+                    for (uint8 i = 0; i < MAX_DIFFICULTY; ++i)
+                    {
+                        BoundInstancesMap const& m_boundInstances = sInstanceSaveMgr->PlayerGetBoundInstances(player->GetGUID(), Difficulty(i));
+                        for (BoundInstancesMap::const_iterator itr = m_boundInstances.begin(); itr != m_boundInstances.end();)
+                        {
+                            if (itr->first != player->GetMapId())
+                            {
+                                sInstanceSaveMgr->PlayerUnbindInstance(player->GetGUID(), itr->first, Difficulty(i), true, player);
+                                itr = m_boundInstances.begin();
+                            }
+                            else
+                                ++itr;
+                        }
+                    }
+                    player->CastSpell(player, 59908, true);
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_MSG_RESET_SAVED_INSTANCES);
+                }
+                break;
+            }
+            case 71: // Reset talents
+            {
                 player->resetTalents(true);
                 player->SendTalentsInfoData(false);
-                ChatHandler(player->GetSession()).PSendSysMessage(
-                    player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "Таланты сброшены." : "Talents have been reset.");
-                ShowPremiumCharacterManagement(player, item);
+                CloseGossipMenuFor(player);
+                ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_TALENT_RESET_CONFIRM);
                 break;
-            case ACTION_PREM_MAX_WEAPON_SKILLS:
+            }
+            case 72: // Weapon skills
+            {
+                switch (player->getClass())
+                {
+                case CLASS_WARRIOR:
+                    CloseGossipMenuFor(player);
+                    player->learnSpell(5011, false); // Crossbows
+                    player->learnSpell(200, false); // Polearms
+                    player->learnSpell(15590, false);
+                    player->learnSpell(264, false);
+                    player->learnSpell(266, false);
+                    player->learnSpell(227, false);
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_SKILLS_WEAPON_CONFIRM);
+                    break;
+                case CLASS_PALADIN:
+                    CloseGossipMenuFor(player);
+                    player->learnSpell(197, false); // Two-handed axes
+                    player->learnSpell(200, false); // Polearms
+                    player->learnSpell(196, false); // One - handed axes
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_SKILLS_WEAPON_CONFIRM);
+                    break;
+                case CLASS_WARLOCK:
+                    CloseGossipMenuFor(player);
+                    player->learnSpell(201, false); // One - handed sword
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_SKILLS_WEAPON_CONFIRM);
+                    break;
+                case CLASS_PRIEST:
+                    CloseGossipMenuFor(player);
+                    player->learnSpell(1180, false);
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_SKILLS_WEAPON_CONFIRM);
+                    break;
+                case CLASS_HUNTER:
+                    CloseGossipMenuFor(player);
+                    player->learnSpell(5011, false); // Crossbows
+                    player->learnSpell(202, false); // Dual - handed sword
+                    player->learnSpell(200, false); // Polearms
+                    player->learnSpell(15590, false);
+                    player->learnSpell(264, false);
+                    player->learnSpell(2567, false);
+                    player->learnSpell(227, false);
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_SKILLS_WEAPON_CONFIRM);
+                    break;
+                case CLASS_MAGE:
+                    CloseGossipMenuFor(player);
+                    player->learnSpell(1180, false);
+                    player->learnSpell(201, false); // One - handed sword
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_SKILLS_WEAPON_CONFIRM);
+                    break;
+                case CLASS_SHAMAN:
+                    CloseGossipMenuFor(player);
+                    player->learnSpell(199, false);
+                    player->learnSpell(197, false); // Two-handed axes
+                    player->learnSpell(1180, false);
+                    player->learnSpell(15590, false);
+                    player->learnSpell(196, false); // One - handed axes
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_SKILLS_WEAPON_CONFIRM);
+                    break;
+                case CLASS_ROGUE:
+                    CloseGossipMenuFor(player);
+                    player->learnSpell(5011, false); // Crossbows
+                    player->learnSpell(198, false);
+                    player->learnSpell(15590, false);
+                    player->learnSpell(264, false);
+                    player->learnSpell(201, false); // One - handed sword
+                    player->learnSpell(266, false);
+                    player->learnSpell(196, false); // One - handed axes
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_SKILLS_WEAPON_CONFIRM);
+                    break;
+                case CLASS_DEATH_KNIGHT:
+                    CloseGossipMenuFor(player);
+                    player->learnSpell(199, false);
+                    player->learnSpell(198, false);
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_SKILLS_WEAPON_CONFIRM);
+                    break;
+                case CLASS_DRUID:
+                    CloseGossipMenuFor(player);
+                    player->learnSpell(199, false);
+                    player->learnSpell(200, false); // Polearms
+                    player->learnSpell(15590, false);
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_SKILLS_WEAPON_CONFIRM);
+                    break;
+                }
+                break;
+            }
+            case 73: // Max skills
+            {
+                CloseGossipMenuFor(player);
                 player->UpdateSkillsToMaxSkillsForLevel();
-                ChatHandler(player->GetSession()).PSendSysMessage(
-                    player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "Оружейные навыки максимальны." : "Weapon skills are now max.");
-                ShowPremiumCharacterManagement(player, item);
+                ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_MAXSKILL_CONFIRM);
                 break;
-            case ACTION_PREM_CHANGE_NAME:
-                player->SetAtLoginFlag(AT_LOGIN_RENAME);
-                CloseGossipMenuFor(player);
+            }
+            case 74: // Change name
+            {
+                if (player->GetArenaPoints() < CONST_ARENA_RENAME)
+                {
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_MSG_NO_ARENA_POINTS);
+                    player->PlayerTalkClass->SendCloseGossip();
+                }
+                else
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    player->SetAtLoginFlag(AT_LOGIN_RENAME);
+                    player->ModifyArenaPoints(-CONST_ARENA_RENAME);
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_MSG_RENAME_COMPLETE);
+                }
                 break;
-            case ACTION_PREM_CUSTOMIZE:
-                player->SetAtLoginFlag(AT_LOGIN_CUSTOMIZE);
-                CloseGossipMenuFor(player);
+            }
+            case 75: // Customize
+            {
+                if (player->GetArenaPoints() < CONST_ARENA_CUSTOMIZE)
+                {
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_MSG_NO_ARENA_POINTS);
+                    player->PlayerTalkClass->SendCloseGossip();
+                }
+                else
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    player->SetAtLoginFlag(AT_LOGIN_CUSTOMIZE);
+                    player->ModifyArenaPoints(-CONST_ARENA_CUSTOMIZE);
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_MSG_CUSTOMIZE_COMPLETE);
+                }
                 break;
-            case ACTION_PREM_CHANGE_FACTION:
-                player->SetAtLoginFlag(AT_LOGIN_CHANGE_FACTION);
-                CloseGossipMenuFor(player);
+            }
+            case 76: // Change Faction
+            {
+                if (player->GetArenaPoints() < CONST_ARENA_CHANGE_FACTION)
+                {
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_MSG_NO_ARENA_POINTS);
+                    player->PlayerTalkClass->SendCloseGossip();
+                }
+                else
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    player->SetAtLoginFlag(AT_LOGIN_CHANGE_FACTION);
+                    player->ModifyArenaPoints(-CONST_ARENA_CHANGE_FACTION);
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_MSG_CHANGE_FACTION_COMPLETE);
+                }
                 break;
-            case ACTION_PREM_CHANGE_RACE:
-                player->SetAtLoginFlag(AT_LOGIN_CHANGE_RACE);
-                CloseGossipMenuFor(player);
+            }
+            case 77: // Change Race
+            {
+                if (player->GetArenaPoints() < CONST_ARENA_CHANGE_RACE)
+                {
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_MSG_NO_ARENA_POINTS);
+                    player->PlayerTalkClass->SendCloseGossip();
+                }
+                else
+                {
+                    player->PlayerTalkClass->SendCloseGossip();
+                    player->SetAtLoginFlag(AT_LOGIN_CHANGE_RACE);
+                    player->ModifyArenaPoints(-CONST_ARENA_CHANGE_RACE);
+                    ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_MSG_CHANGE_RACE_COMPLETE);
+                }
                 break;
-            default:
-                ShowMainMenu(player, item);
-                break;
+            }
+            }
+        }
+        else if (sender == GOSSIP_SENDER_MAIN + 4) // Teleportation main categories
+        {
+            uint8 faction = player->GetTeamId() == TEAM_ALLIANCE ? 2 : 1; // 1 = Орда, 2 = Альянс
+            sCustomTeleportMgr->GetTeleportListAfter(player, action, faction, item->GetGUID());
+        }
+        else if (sender == GOSSIP_SENDER_MAIN + 5) // Teleportation execute
+        {
+            sCustomTeleportMgr->TeleportFunction(player, action);
         }
     }
 
-private:
-    bool CanOpenMenu(Player* player)
+    void OnGossipSelectCode(Player* player, Item* /*item*/, uint32 /*sender*/, uint32 action, const char* code) override
     {
-        if (!player)
-            return true;
+        player->PlayerTalkClass->ClearMenus();
 
-        if (player->IsInCombat() || player->IsInFlight() || player->GetMap()->IsBattlegroundOrArena() || player->HasStealthAura() || player->isDead())
+        if (!*code)
+            return;
+
+        // For GuildWars system
+        std::string guildName = code;
+
+        Guild* targetGuild = sGuildMgr->GetGuildByName(guildName);
+        if (!targetGuild)
         {
-            ChatHandler(player->GetSession()).PSendSysMessage(
-                player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ?
-                "Сейчас это невозможно." : "Now it is impossible.");
-            return true;
-        }
-
-        return false;
-    }
-
-    void ShowMainMenu(Player* player, Item* item)
-    {
-        std::string coinsText = player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ?
-            "|TInterface/ICONS/INV_Misc_Coin_01:20:20:-15:0|t Ваши бонусы: " + std::to_string(player->GetSession()->GetAccountBalance()) :
-            "|TInterface/ICONS/INV_Misc_Coin_01:20:20:-15:0|t Your bonuses: " + std::to_string(player->GetSession()->GetAccountBalance());
-
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT,
-            coinsText,
-            GOSSIP_SENDER_MAIN, ACTION_BACK);
-
-
-        AddGossipItemFor(player, GOSSIP_ICON_INTERACT_1,
-            player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ?
-            "|TInterface/ICONS/INV_BannerPVP_02:20:20:-15:0|t Ранговая информация" :
-            "|TInterface/ICONS/INV_BannerPVP_02:20:20:-15:0|t Rank information",
-            GOSSIP_SENDER_MAIN, ACTION_RANK_INFO);
-        AddGossipItemFor(player, GOSSIP_ICON_INTERACT_1,
-            player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ?
-            "|TInterface/ICONS/VIP:20:20:-15:0|t Премиум" :
-            "|TInterface/ICONS/VIP:20:20:-15:0|t Premium",
-            GOSSIP_SENDER_MAIN, ACTION_PREMIUM_MENU);
-        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, item->GetGUID());
-    }
-
-    void ShowRankInfo(Player* player, Item* item)
-    {
-        std::string rankText = player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ?
-            "|TInterface/ICONS/INV_BannerPVP_02:20:20:-15:0|t Текущий ранг: " + std::to_string(player->GetRankByExp()) :
-            "|TInterface/ICONS/INV_BannerPVP_02:20:20:-15:0|t Current rank: " + std::to_string(player->GetRankByExp());
-        std::string rankExpText = player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ?
-            "|TInterface/ICONS/INV_Misc_Note_01:20:20:-15:0|t Опыт ранга: " + std::to_string(player->GetRankPoints()) :
-            "|TInterface/ICONS/INV_Misc_Note_01:20:20:-15:0|t Rank experience: " + std::to_string(player->GetRankPoints());
-        std::string nextRankText = player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ?
-            "|TInterface/ICONS/Ability_DualWield:20:20:-15:0|t До следующего ранга: " + std::to_string(player->PointsUntilNextRank()) :
-            "|TInterface/ICONS/Ability_DualWield:20:20:-15:0|t To next rank: " + std::to_string(player->PointsUntilNextRank());
-
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, rankText, GOSSIP_SENDER_MAIN, ACTION_RANK_INFO);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, rankExpText, GOSSIP_SENDER_MAIN, ACTION_RANK_INFO);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, nextRankText, GOSSIP_SENDER_MAIN, ACTION_RANK_INFO);
-
-        AddGossipItemFor(player, GOSSIP_ICON_BATTLE, player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "Обновить" : "Refresh", GOSSIP_SENDER_MAIN, ACTION_RANK_INFO);
-        AddGossipItemFor(player, GOSSIP_ICON_BATTLE, player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "Назад" : "Back", GOSSIP_SENDER_MAIN, ACTION_BACK);
-        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, item->GetGUID());
-    }
-
-    void ShowPremiumMenu(Player* player, Item* item)
-    {
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, BuildPremiumStatusLine(player), GOSSIP_SENDER_MAIN, ACTION_PREMIUM_MENU);
-
-        if (player->IsPremium())
-        {
-            AddGossipItemFor(player, GOSSIP_ICON_INTERACT_1,
-                player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "Продлить премиум" : "Extend premium",
-                GOSSIP_SENDER_MAIN, ACTION_PREMIUM_EXTEND);
-        }
-        else
-            AddGossipItemFor(player, GOSSIP_ICON_INTERACT_1,
-                player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "Купить премиум" : "Buy premium",
-                GOSSIP_SENDER_MAIN, ACTION_PREMIUM_BUY);
-
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/INV_Misc_Book_11:20:20:-15:0|t Команды VIP",
-            GOSSIP_SENDER_MAIN, ACTION_PREM_COMMANDS_INFO);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/Ability_DualWield:20:20:-15:0|t Управление персонажем",
-            GOSSIP_SENDER_MAIN, ACTION_PREM_CHAR_MANAGEMENT);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/Spell_Shadow_Metamorphosis:20:20:-15:0|t Изменение персонажа",
-            GOSSIP_SENDER_MAIN, ACTION_PREM_CHAR_CHANGING);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/INV_Hammer_20:20:20:-15:0|t Ремонт экипировки",
-            GOSSIP_SENDER_MAIN, ACTION_PREM_REPAIR);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/Ability_Creature_Cursed_04:20:20:-15:0|t Убрать Дезертира",
-            GOSSIP_SENDER_MAIN, ACTION_PREM_REMOVE_DESERTER);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/Spell_Holy_RemoveCurse:20:20:-15:0|t Убрать Слабость",
-            GOSSIP_SENDER_MAIN, ACTION_PREM_REMOVE_WEAKNESS);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/Spell_Holy_ArcaneIntellect:20:20:-15:0|t Выдать баффы",
-            GOSSIP_SENDER_MAIN, ACTION_PREM_BUFFS);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/INV_Misc_Bag_08:20:20:-15:0|t VIP Банк",
-            GOSSIP_SENDER_MAIN, ACTION_PREM_BANK);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/Spell_ChargeNegative:20:20:-15:0|t Сбросить кулдауны",
-            GOSSIP_SENDER_MAIN, ACTION_PREM_RESET_COOLDOWN);
-
-        AddGossipItemFor(player, GOSSIP_ICON_INTERACT_1, player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "Назад" : "Back", GOSSIP_SENDER_MAIN, ACTION_BACK);
-        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, item->GetGUID());
-    }
-
-    void ShowPremiumBuyMenu(Player* player, Item* item, bool extendMode)
-    {
-        AddGossipItemFor(player, GOSSIP_ICON_BATTLE, player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "7 дней - 20 бонусов" : "7 days - 20 bonuses", GOSSIP_SENDER_MAIN, ACTION_PREMIUM_7);
-        AddGossipItemFor(player, GOSSIP_ICON_BATTLE, player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "14 дней - 40 бонусов" : "14 days - 40 bonuses", GOSSIP_SENDER_MAIN, ACTION_PREMIUM_14);
-        AddGossipItemFor(player, GOSSIP_ICON_BATTLE, player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "31 день - 80 бонусов" : "31 days - 80 bonuses", GOSSIP_SENDER_MAIN, ACTION_PREMIUM_31);
-        AddGossipItemFor(player, GOSSIP_ICON_INTERACT_1, player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "Назад" : "Back", GOSSIP_SENDER_MAIN, ACTION_PREMIUM_MENU);
-        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, item->GetGUID());
-    }
-
-    void BuyOrExtendPremium(Player* player, Item* item, uint32 days, uint32 cost)
-    {
-        if (!player->GetSession()->SetAccountCurrency(cost, 1, false))
-        {
-            ChatHandler(player->GetSession()).PSendSysMessage(
-                player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ?
-                "Недостаточно бонусов." : "Not enough bonuses.");
-            ShowPremiumBuyMenu(player, item, player->IsPremium());
+            ChatHandler(player->GetSession()).PSendSysMessage(LANG_GUILD_NOT_FOUND, guildName);
+            player->PlayerTalkClass->SendCloseGossip();
             return;
         }
 
-        uint32 accountId = player->GetSession()->GetAccountId();
-        time_t now = GameTime::GetGameTime().count();
-        time_t baseTime = now;
-        if (AccountMgr::GetVipStatus(accountId))
+        Guild* ownGuild = player->GetGuild();
+        if (!ownGuild)
         {
-            time_t currentUnset = AccountMgr::GetVIPunsetDate(accountId);
-            if (currentUnset > baseTime)
-                baseTime = currentUnset;
+            player->PlayerTalkClass->SendCloseGossip();
+            return;
         }
 
-        time_t newUnset = baseTime + static_cast<time_t>(days) * 24 * 60 * 60;
-        if (AccountMgr::GetVipStatus(accountId))
-            AccountMgr::UpdateVipStatus(accountId, newUnset);
-        else
-            AccountMgr::SetVipStatus(accountId, newUnset);
-
-        player->SetPremiumStatus(true);
-        player->SetPremiumUnsetdate(newUnset);
-
-        ChatHandler(player->GetSession()).PSendSysMessage(
-            player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ?
-            "Премиум успешно активирован/продлен." : "Premium activated/extended successfully.");
-        ShowPremiumMenu(player, item);
-    }
-
-    void ShowRatesAndBonuses(Player* player, Item* item)
-    {
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT,
-            player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ?
-            ("Ваши бонусы: " + std::to_string(player->GetSession()->GetAccountBalance())).c_str() :
-            ("Your bonuses: " + std::to_string(player->GetSession()->GetAccountBalance())).c_str(),
-            GOSSIP_SENDER_MAIN, ACTION_BONUSES_INFO);
-
-        AddGossipItemFor(player, GOSSIP_ICON_BATTLE, player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "Обновить" : "Refresh", GOSSIP_SENDER_MAIN, ACTION_BONUSES_INFO);
-        AddGossipItemFor(player, GOSSIP_ICON_BATTLE, player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "Назад" : "Back", GOSSIP_SENDER_MAIN, ACTION_BACK);
-        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, item->GetGUID());
-    }
-
-    std::string BuildPremiumStatusLine(Player* player)
-    {
-        if (!player->IsPremium())
-            return player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ?
-                "|TInterface/ICONS/VIP:20:20:-15:0|t Премиум: не активен" :
-                "|TInterface/ICONS/VIP:20:20:-15:0|t Premium: inactive";
-
-        time_t now = GameTime::GetGameTime().count();
-        time_t unset = player->GetPremiumUnsetdate();
-        if (unset <= now)
-            return player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ?
-                "|TInterface/ICONS/VIP:20:20:-15:0|t Премиум: истек" :
-                "|TInterface/ICONS/VIP:20:20:-15:0|t Premium: expired";
-
-        uint32 total = static_cast<uint32>(unset - now);
-        uint32 days = total / 86400;
-        uint32 hours = (total % 86400) / 3600;
-        uint32 mins = (total % 3600) / 60;
-
-        if (player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU)
-            return "|TInterface/ICONS/VIP:20:20:-15:0|t Осталось премиума: " + std::to_string(days) + "д " + std::to_string(hours) + "ч " + std::to_string(mins) + "м";
-
-        return "|TInterface/ICONS/VIP:20:20:-15:0|t Premium left: " + std::to_string(days) + "d " + std::to_string(hours) + "h " + std::to_string(mins) + "m";
-    }
-
-    void ShowPremiumCommandsInfo(Player* player, Item* item)
-    {
-        ChatHandler chat(player->GetSession());
-        if (player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU)
-        {
-            chat.PSendSysMessage(".vip debuff - снять Дезертира и Слабость воскрешения");
-            chat.PSendSysMessage(".vip bank - открыть банк");
-            chat.PSendSysMessage(".vip repair - починить экипировку");
-            chat.PSendSysMessage(".vip home - телепорт домой");
-            chat.PSendSysMessage(".vip capital - телепорт в столицу");
-        }
-        else
-        {
-            chat.PSendSysMessage(".vip debuff - remove Deserter and Resurrection Sickness");
-            chat.PSendSysMessage(".vip bank - open bank");
-            chat.PSendSysMessage(".vip repair - repair gear");
-            chat.PSendSysMessage(".vip home - teleport home");
-            chat.PSendSysMessage(".vip capital - teleport to capital");
-        }
-        ShowPremiumMenu(player, item);
-    }
-
-    void ShowPremiumCharacterManagement(Player* player, Item* item)
-    {
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/Ability_Marksmanship:20:20:-15:0|t Dual spec", GOSSIP_SENDER_MAIN, ACTION_PREM_DUAL_SPEC);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/Spell_Arcane_PortalDalaran:20:20:-15:0|t Reset talents", GOSSIP_SENDER_MAIN, ACTION_PREM_RESET_TALENTS);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/INV_Sword_04:20:20:-15:0|t Max weapon skills", GOSSIP_SENDER_MAIN, ACTION_PREM_MAX_WEAPON_SKILLS);
-        AddGossipItemFor(player, GOSSIP_ICON_INTERACT_1, player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "Назад" : "Back", GOSSIP_SENDER_MAIN, ACTION_PREMIUM_MENU);
-        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, item->GetGUID());
-    }
-
-    void ShowPremiumCharacterChanging(Player* player, Item* item)
-    {
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/INV_Misc_Note_05:20:20:-15:0|t Change name", GOSSIP_SENDER_MAIN, ACTION_PREM_CHANGE_NAME);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/Achievement_General:20:20:-15:0|t Customize", GOSSIP_SENDER_MAIN, ACTION_PREM_CUSTOMIZE);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/INV_BannerPVP_01:20:20:-15:0|t Change faction", GOSSIP_SENDER_MAIN, ACTION_PREM_CHANGE_FACTION);
-        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/Spell_Shadow_Metamorphosis:20:20:-15:0|t Change race", GOSSIP_SENDER_MAIN, ACTION_PREM_CHANGE_RACE);
-        AddGossipItemFor(player, GOSSIP_ICON_INTERACT_1, player->GetSession()->GetSessionDbLocaleIndex() == LOCALE_ruRU ? "Назад" : "Back", GOSSIP_SENDER_MAIN, ACTION_PREMIUM_MENU);
-        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, item->GetGUID());
-    }
-
-    void HandleRemoveDeserter(Player* player, Item* item)
-    {
-        if (player->HasAura(26013))
-            player->RemoveAurasDueToSpell(26013);
-        ShowPremiumMenu(player, item);
-    }
-
-    void HandlePremiumBuffs(Player* player, Item* item)
-    {
-        uint32 constexpr auraSize = 13;
-        uint32 constexpr auras[auraSize] = { 15366, 16609, 48162, 48074, 48170, 43223, 36880, 69994, 33081, 26035, 48469, 57623, 47440 };
-
-        if (!player->HasAura(45523))
-        {
-            player->RemoveAurasByType(SPELL_AURA_MOUNTED);
-            for (uint32 aura : auras)
-                player->AddAura(aura, player);
-            player->CastSpell(player, 45523, true);
-        }
-
-        ShowPremiumMenu(player, item);
-    }
-
-    void HandleResetCooldown(Player* player, Item* item)
-    {
-        if (!player->HasAura(45523))
-        {
-            player->RemoveArenaSpellCooldowns(true);
-            player->CastSpell(player, 45523, true);
-        }
-        ShowPremiumMenu(player, item);
+        player->PlayerTalkClass->SendCloseGossip();
     }
 };
 
