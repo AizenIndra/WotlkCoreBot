@@ -46,8 +46,6 @@
      { "ACMSG_AVERAGE_ITEM_LEVEL_REQUEST",               &AddonIO::HandleAverageItemLevelRequest            },
      //Donate Service
      { "ACMSG_SHOP_BALANCE_REQUEST",                     &AddonIO::HandleShopBalanceRequest                 }, 
-     { "ACMSG_PREMIUM_INFO_REQUEST",                     &AddonIO::HandlePremiumInfoRequest                 },
-     { "ACMSG_PREMIUM_RENEW_REQUEST",                    &AddonIO::HandlePremiumRenewRequest                },
      { "ACMSG_SHOP_ITEM_LIST_REQUEST",                   &AddonIO::HandleShopItemListRequest                },
      /*{ "ACMSG_SHOP_REFUNDABLE_PURCHASE_LIST_REQUEST",    &AddonIO::HandleShopRefundableListRequest          },*/
      { "ACMSG_SHOP_VERSION",                             &AddonIO::HandleShopVersionRequest                 },
@@ -1067,110 +1065,6 @@ void AddonIO::HandleGuildGetReputationReward(Player* player, std::string body)
  
      player->SendAddonMessage("ASMSG_SHOP_ITEM_COUNT\t{}", sWorld->GetStoreItems());
  }
-
-void AddonIO::HandlePremiumInfoRequest(Player* player, std::string /*body*/)
-{
-    if (!player || !player->GetSession())
-        return;
-
-    // Use account DB (same as LoadPremiumStatusToPlayer), not player cache, so the store
-    // shows correct premium state even when the request is handled before or during
-    // character load (e.g. new character, first login).
-    uint32 accountId = player->GetSession()->GetAccountId();
-    bool vip = AccountMgr::GetVipStatus(accountId);
-    time_t unset = AccountMgr::GetVIPunsetDate(accountId);
-    time_t now = time(nullptr);
-    uint32 remaining = (vip && unset > now) ? static_cast<uint32>(unset - now) : 0;
-
-    // Keep player cache in sync so other code (auras, etc.) sees correct state
-    if (player->IsPremium() != vip || player->GetPremiumUnsetdate() != unset)
-    {
-        player->SetPremiumStatus(vip);
-        player->SetPremiumUnsetdate(vip ? unset : 0);
-    }
-
-    player->SendAddonMessage("ASMSG_PREMIUM_INFO_RESPONSE\t{}", remaining);
-}
-
-void AddonIO::HandlePremiumRenewRequest(Player* player, std::string body)
-{
-    if (!player || !player->GetSession() || body.empty() || !sWorld->getBoolConfig(CONFIG_SHOP_ENABLE))
-        return;
-
-    try
-    {
-        auto mes = std::stoi(body);
-
-        auto sess = player->GetSession();
-        uint32 cost = 0, prem_time = 0;
-        uint8 p_resp = 1;
-
-        switch (mes)
-        {
-        case STORE_PREMIUM_BUY_1:
-            cost = COST_STORE_PREMIUM_BUY_1;
-            prem_time = TIME_STORE_PREMIUM_BUY_1;
-            break;
-        case STORE_PREMIUM_BUY_2:
-            cost = COST_STORE_PREMIUM_BUY_2;
-            prem_time = TIME_STORE_PREMIUM_BUY_2;
-            break;
-        case STORE_PREMIUM_BUY_3:
-            cost = COST_STORE_PREMIUM_BUY_3;
-            prem_time = TIME_STORE_PREMIUM_BUY_3;
-            break;
-        case STORE_PREMIUM_BUY_4:
-            cost = COST_STORE_PREMIUM_BUY_4;
-            prem_time = TIME_STORE_PREMIUM_BUY_4;
-            break;
-        default:
-            break;
-        }
-
-        if (cost && sess->GetAccountBalance() >= cost)
-        {
-            if (sess->SetAccountCurrency(cost, 1, false))
-            {
-                bool vip = AccountMgr::GetVipStatus(sess->GetAccountId());
-                if (vip)
-                {
-                    player->SetPremiumUnsetdate(prem_time + player->GetPremiumUnsetdate());
-                    AccountMgr::UpdateVipStatus(sess->GetAccountId(), prem_time + player->GetPremiumUnsetdate());
-                    player->SetPremiumStatus(true);
-                }
-                else
-                {
-                    player->SetPremiumUnsetdate(prem_time + time(nullptr));
-                    AccountMgr::SetVipStatus(sess->GetAccountId(), prem_time + time(nullptr));
-                    player->SetPremiumStatus(true);
-                }
-            }
-
-            sess->WritePurchaseToLogs(sess, "PREMIUM", prem_time, 0, cost, uint32(time(nullptr)));
-
-            p_resp = 0; //ok
-
-            if (sWorld->getBoolConfig(CONFIG_VIP_DEBUFF) && !player->InBattleground() && !player->HasStealthAura() && player->IsAlive())
-            {
-                uint32 vipSpellId = sWorld->getIntConfig(CONFIG_VIP_DEBUFF_SPELL);
-                // Remove negative auras but never the VIP premium aura (renewal must not strip it)
-                player->RemoveAppliedAuras([vipSpellId](AuraApplication const* aurApp) {
-                    return !aurApp->IsPositive() && aurApp->GetBase()->GetId() != vipSpellId;
-                });
-                if (vipSpellId)
-                    player->CastSpell(player, vipSpellId, true);
-            }
-        }
-
-        player->SendAddonMessage("ASMSG_PREMIUM_RENEW_RESPONSE\t{}", p_resp);
-
-    }
-    catch (std::exception /*ex*/)
-    {
-        return;
-    }
-
-}
 
 void AddonIO::HandleGuildSpellsRequest(Player* player, std::string /*body*/)
 {

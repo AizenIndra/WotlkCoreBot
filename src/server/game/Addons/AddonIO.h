@@ -33,8 +33,6 @@
  
      //Donate Service
      void HandleShopBalanceRequest(Player* player, std::string body);
-     void HandlePremiumInfoRequest(Player* player, std::string body);
-     void HandlePremiumRenewRequest(Player* player, std::string body);
      void HandleShopItemListRequest(Player* player, std::string body);
      void HandleShopRefundableListRequest(Player* player, std::string body);
      void HandleShopVersionRequest(Player* player, std::string body);
