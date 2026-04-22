@@ -118,10 +118,6 @@ private:
         AddGossipItemFor(player, GOSSIP_ICON_TAXI, GTS(LANG_ITEM_TELEPORT_MENU), GOSSIP_SENDER_MAIN, 100);
         AddGossipItemFor(player, GOSSIP_ICON_BATTLE, GTS(LANG_RANK_SYSTEM_MENU), GOSSIP_SENDER_MAIN, 200);
 
-        // Show guild menu if player is in guild
-        if (player->GetGuild())
-            AddGossipItemFor(player, GOSSIP_ICON_TABARD, GTS(LANG_GSYSTEM_GUILD_MENU), GOSSIP_SENDER_MAIN, 103);
-
         // Show premium menu if player is premium
         if (player->IsPremium())
             AddGossipItemFor(player, GOSSIP_ICON_CHAT, GTS(LANG_ITEM_VIP_MENU), GOSSIP_SENDER_MAIN, 10);
@@ -148,10 +144,6 @@ private:
                 // Show main menu
                 AddGossipItemFor(player, GOSSIP_ICON_TAXI, GTS(LANG_ITEM_TELEPORT_MENU), GOSSIP_SENDER_MAIN, 100);
                 AddGossipItemFor(player, GOSSIP_ICON_BATTLE, GTS(LANG_RANK_SYSTEM_MENU), GOSSIP_SENDER_MAIN, 200);
-
-                // Show guild menu if player is in guild
-                if (player->GetGuild())
-                    AddGossipItemFor(player, GOSSIP_ICON_TABARD, GTS(LANG_GSYSTEM_GUILD_MENU), GOSSIP_SENDER_MAIN, 103);
 
                 // Show premium menu if player is premium
                 if (player->IsPremium())
@@ -578,24 +570,6 @@ private:
 
         if (!*code)
             return;
-
-        // For GuildWars system
-        std::string guildName = code;
-
-        Guild* targetGuild = sGuildMgr->GetGuildByName(guildName);
-        if (!targetGuild)
-        {
-            ChatHandler(player->GetSession()).PSendSysMessage(LANG_GUILD_NOT_FOUND, guildName);
-            player->PlayerTalkClass->SendCloseGossip();
-            return;
-        }
-
-        Guild* ownGuild = player->GetGuild();
-        if (!ownGuild)
-        {
-            player->PlayerTalkClass->SendCloseGossip();
-            return;
-        }
 
         player->PlayerTalkClass->SendCloseGossip();
     }

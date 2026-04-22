@@ -105,12 +105,6 @@ std::string sCustomTeleport::HeadMenu(Player* player) {
     return ss.str();
 }
 
-uint32 sCustomTeleport::CalculRequiredMoney(Player* player, uint32 money) {
-    /* количество рангов (1 ранг = 2% скидка) */
-    uint8 count = player->GetAuraCount(Player::GetRankSystemAuraID());
-    return ((money / 100) * (100 - (count * 2)));
-}
-
 std::string sCustomTeleport::ConverterMoneyToGold(Player* player, uint32 money) {
     uint32 gold = money / GOLD;
     uint32 silv = (money % GOLD) / SILVER;
